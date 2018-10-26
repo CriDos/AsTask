@@ -4,7 +4,7 @@
     <RootNamespace>HardDev.AsTask</RootNamespace>
     <Authors>CriDos</Authors>
     <Company>HardDev</Company>
-    <Description>Async Task Library.</Description>
+    <Description>Async Task Library</Description>
       <AssemblyVersion>1.0.5.0</AssemblyVersion>
       <FileVersion>1.0.5.0</FileVersion>
     <Copyright>Copyright HardDev© 2018</Copyright>
@@ -13,6 +13,14 @@
     <Configurations>Debug;Release</Configurations>
     <Platforms>AnyCPU</Platforms>
     <TargetFrameworks>net472;netstandard2.0;netcoreapp2.1</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <RepositoryUrl>https://github.com/CriDos/AsTask</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/CriDos/AsTask</PackageProjectUrl>
+    <PackageTags>multithreading, async-await, thread-pool</PackageTags>
+    <RepositoryType />
+    <PackageIconUrl></PackageIconUrl>
+    <PackageLicenseUrl>https://github.com/CriDos/AsTask/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
