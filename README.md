@@ -1,4 +1,4 @@
-# Async Task Library - AsTask
+# AsTask - Async Task Library
 
 A helper library for  multi-threaded async/await.
 
