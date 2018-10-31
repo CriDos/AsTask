@@ -33,6 +33,11 @@ namespace HardDev.AsTask.Context
             return _queue.GetConsumingEnumerable();
         }
 
+        public int GetCountTasks()
+        {
+            return _queue.Count;
+        }
+
         /// <summary>
         /// Generates an enumerable of <see cref="T:System.Threading.Tasks.Task"/> instances currently queued to the scheduler waiting to be executed.
         /// </summary>

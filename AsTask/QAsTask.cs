@@ -12,15 +12,14 @@ namespace HardDev.AsTask
     public static class QAsTask
     {
         public const int MAX_BLOCKING_THREAD_POOL = 16;
-
         public static int OptimalDegreeOfParallelism { get; } = Math.Max(Environment.ProcessorCount - 1, 1);
 
         private static QAsyncContextThread _mainContextThread;
         private static SynchronizationContext _mainContext;
         private static IAwaiter _mainAwaiter;
-
+        
         private static int _backgroundThreadId;
-
+        
         private static QLimitedTaskScheduler _normaThreadPool;
         private static QLimitedTaskScheduler _blockingThreadPool;
 
@@ -28,7 +27,6 @@ namespace HardDev.AsTask
         private static readonly Dictionary<string, int> AsyncContextThreadIdByName = new Dictionary<string, int>();
 
         private static bool _initialized;
-
 
         public static void Initialize(bool enableOptimalParallelism = true, SynchronizationContext mainSynContext = null)
         {
@@ -107,7 +105,7 @@ namespace HardDev.AsTask
             return QAsyncContextType.UndefinedThread;
         }
 
-        #region Exceptions
+        #region Exception Handling
 
         public static void AddUnhandledException(UnhandledExceptionEventHandler exceptionHandler)
         {
@@ -267,7 +265,7 @@ namespace HardDev.AsTask
 
         #endregion
 
-        #region TaskPool
+        #region ThreadPool
 
         /// <summary>
         /// Switches execution to a normal thread pool.
