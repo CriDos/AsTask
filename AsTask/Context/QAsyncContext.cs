@@ -136,12 +136,13 @@ namespace HardDev.AsTask.Context
         /// Queues a task for execution, and begins executing all tasks in the queue. This method returns when all tasks have been completed and the outstanding asynchronous operation count is zero. This method will unwrap and propagate errors from the task.
         /// </summary>
         /// <param name="action">The action to execute. May not be <c>null</c>.</param>
-        public static void Run(Action action)
+        /// <param name="contextName">Context name.</param>
+        public static void Run(Action action, string contextName = "")
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            using (var context = new QAsyncContext())
+            using (var context = new QAsyncContext(contextName))
             {
                 var task = context.Factory.Run(action);
                 context.Execute();
@@ -154,12 +155,13 @@ namespace HardDev.AsTask.Context
         /// </summary>
         /// <typeparam name="TResult">The result type of the task.</typeparam>
         /// <param name="action">The action to execute. May not be <c>null</c>.</param>
-        public static TResult Run<TResult>(Func<TResult> action)
+        /// <param name="contextName">Context name.</param>
+        public static TResult Run<TResult>(Func<TResult> action, string contextName = "")
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            using (var context = new QAsyncContext())
+            using (var context = new QAsyncContext(contextName))
             {
                 var task = context.Factory.Run(action);
                 context.Execute();
@@ -171,13 +173,14 @@ namespace HardDev.AsTask.Context
         /// Queues a task for execution, and begins executing all tasks in the queue. This method returns when all tasks have been completed and the outstanding asynchronous operation count is zero. This method will unwrap and propagate errors from the task proxy.
         /// </summary>
         /// <param name="action">The action to execute. May not be <c>null</c>.</param>
-        public static void Run(Func<Task> action)
+        /// <param name="contextName">Context name.</param>
+        public static void Run(Func<Task> action, string contextName = "")
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
             // ReSharper disable AccessToDisposedClosure
-            using (var context = new QAsyncContext())
+            using (var context = new QAsyncContext(contextName))
             {
                 context.OperationStarted();
                 var task = context.Factory.Run(action).ContinueWith(t =>
@@ -196,13 +199,14 @@ namespace HardDev.AsTask.Context
         /// </summary>
         /// <typeparam name="TResult">The result type of the task.</typeparam>
         /// <param name="action">The action to execute. May not be <c>null</c>.</param>
-        public static TResult Run<TResult>(Func<Task<TResult>> action)
+        /// <param name="contextName">Context name.</param>
+        public static TResult Run<TResult>(Func<Task<TResult>> action, string contextName = "")
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
             // ReSharper disable AccessToDisposedClosure
-            using (var context = new QAsyncContext())
+            using (var context = new QAsyncContext(contextName))
             {
                 context.OperationStarted();
                 var task = context.Factory.Run(action).ContinueWith(t =>

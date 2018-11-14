@@ -12,14 +12,14 @@ namespace HardDev.AsTask
     public static class QAsTask
     {
         public const int MAX_BLOCKING_THREAD_POOL = 16;
-        public static int OptimalDegreeOfParallelism { get; } = Math.Max(Environment.ProcessorCount - 1, 1);
+        public static int OptimalDegreeOfParallelism => Math.Max(Environment.ProcessorCount - 1, 1);
 
         private static QAsyncContextThread _mainContextThread;
         private static SynchronizationContext _mainContext;
         private static IAwaiter _mainAwaiter;
-        
+
         private static int _backgroundThreadId;
-        
+
         private static QLimitedTaskScheduler _normaThreadPool;
         private static QLimitedTaskScheduler _blockingThreadPool;
 
@@ -28,18 +28,18 @@ namespace HardDev.AsTask
 
         private static bool _initialized;
 
-        public static void Initialize(bool enableOptimalParallelism = true, SynchronizationContext mainSynContext = null)
+        public static void Initialize(bool enableOptimalParallelism = false, SynchronizationContext mainSynContext = null)
         {
             if (_initialized)
                 return;
 
             if (enableOptimalParallelism)
-                Initialize(OptimalDegreeOfParallelism);
+                Initialize(OptimalDegreeOfParallelism, MAX_BLOCKING_THREAD_POOL, mainSynContext);
             else
-                Initialize(Environment.ProcessorCount);
+                Initialize(Environment.ProcessorCount, MAX_BLOCKING_THREAD_POOL, mainSynContext);
         }
 
-        public static void Initialize(int maxNormalThreadPool, SynchronizationContext mainSynContext = null)
+        public static void Initialize(int maxNormalThreadPool, int maxBlockingThreadPool, SynchronizationContext mainSynContext = null)
         {
             if (_initialized)
                 return;
@@ -55,7 +55,7 @@ namespace HardDev.AsTask
                 _mainAwaiter = new QSynchronizationContextAwaiter(_mainContext);
 
             _normaThreadPool = new QLimitedTaskScheduler(maxNormalThreadPool);
-            _blockingThreadPool = new QLimitedTaskScheduler(MAX_BLOCKING_THREAD_POOL);
+            _blockingThreadPool = new QLimitedTaskScheduler(maxBlockingThreadPool);
 
             _backgroundThreadId = CreateAsyncContextThread("BackgroundThread");
 
