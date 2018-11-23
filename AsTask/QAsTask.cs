@@ -14,6 +14,8 @@ namespace HardDev.AsTask
         public const int MAX_BLOCKING_THREAD_POOL = 16;
         public static int OptimalDegreeOfParallelism => Math.Max(Environment.ProcessorCount - 1, 1);
 
+        private const string NOT_INITIALIZE_MSG = "First need to initialize AsTask.";
+
         private static QAsyncContextThread _mainContextThread;
         private static SynchronizationContext _mainContext;
         private static IAwaiter _mainAwaiter;
@@ -27,6 +29,9 @@ namespace HardDev.AsTask
         private static readonly Dictionary<string, int> AsyncContextThreadIdByName = new Dictionary<string, int>();
 
         private static bool _initialized;
+        private static bool? _isSupportMultithreading;
+
+        #region Initialize
 
         public static void Initialize(bool enableOptimalParallelism = false, SynchronizationContext mainSynContext = null)
         {
@@ -44,26 +49,43 @@ namespace HardDev.AsTask
             if (_initialized)
                 return;
 
-            _mainContext = mainSynContext ?? SynchronizationContext.Current;
-            if (_mainContext == null)
-            {
-                _mainContextThread = new QAsyncContextThread("MainContext");
-                _mainContext = _mainContextThread.Context.SynchronizationContext;
-                _mainAwaiter = _mainContextThread.Context.Awaiter;
-            }
-            else
-                _mainAwaiter = new QSynchronizationContextAwaiter(_mainContext);
-
-            _normaThreadPool = new QLimitedTaskScheduler(maxNormalThreadPool);
-            _blockingThreadPool = new QLimitedTaskScheduler(maxBlockingThreadPool);
-
-            _backgroundThreadId = CreateAsyncContextThread("BackgroundThread");
+            if (!CheckSupportMultithreading())
+                throw new PlatformNotSupportedException("Target platform not supported multithreading.");
 
             _initialized = true;
+
+            try
+            {
+                _mainContext = mainSynContext ?? SynchronizationContext.Current;
+                if (_mainContext == null)
+                {
+                    _mainContextThread = new QAsyncContextThread("MainContext");
+                    _mainContext = _mainContextThread.Context.SynchronizationContext;
+                    _mainAwaiter = _mainContextThread.Context.Awaiter;
+                }
+                else
+                    _mainAwaiter = new QSynchronizationContextAwaiter(_mainContext);
+
+                _normaThreadPool = new QLimitedTaskScheduler(maxNormalThreadPool);
+                _blockingThreadPool = new QLimitedTaskScheduler(maxBlockingThreadPool);
+
+                _backgroundThreadId = CreateAsyncContextThread("BackgroundThread");
+            }
+            catch (Exception)
+            {
+                _initialized = false;
+            }
         }
+
+        #endregion
+
+        #region Information
 
         public static string WhereAmI()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             switch (GetCurrentContextType())
             {
                 case QAsyncContextType.MainThread:
@@ -85,6 +107,9 @@ namespace HardDev.AsTask
 
         public static QAsyncContextType GetCurrentContextType()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             if (IsMainThread())
                 return QAsyncContextType.MainThread;
 
@@ -104,6 +129,25 @@ namespace HardDev.AsTask
 
             return QAsyncContextType.UndefinedThread;
         }
+
+        public static bool CheckSupportMultithreading()
+        {
+            if (_isSupportMultithreading.HasValue)
+                return _isSupportMultithreading.Value;
+
+            try
+            {
+                Task.Run(() => { _isSupportMultithreading = true; }).Wait();
+            }
+            catch (Exception)
+            {
+                _isSupportMultithreading = false;
+            }
+
+            return _isSupportMultithreading.GetValueOrDefault();
+        }
+
+        #endregion
 
         #region Exception Handling
 
@@ -132,6 +176,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static IAwaiter ToMainThread()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _mainAwaiter;
         }
 
@@ -140,6 +187,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static Task ToMainThread(Action action)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _mainContext.PostAsync(action).ExceptionHandler();
         }
 
@@ -148,6 +198,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static bool IsMainThread()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return SynchronizationContext.Current == _mainContext;
         }
 
@@ -157,6 +210,9 @@ namespace HardDev.AsTask
 
         public static int CreateAsyncContextThread(string name)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             if (AsyncContextThreadIdByName.ContainsKey(name))
                 throw new ArgumentException($"AsyncContext name is already exists: {name}");
 
@@ -168,6 +224,9 @@ namespace HardDev.AsTask
 
         public static void RemoveAsyncContextThread(string name)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             if (!AsyncContextThreadIdByName.TryGetValue(name, out var threadId))
                 throw new ArgumentException($"AsyncContext name is not exists: {name}");
 
@@ -178,6 +237,9 @@ namespace HardDev.AsTask
 
         public static int GetCurrentAsyncContextId()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             var context = QAsyncContext.Current;
             if (context != null)
                 return context.Id;
@@ -187,16 +249,25 @@ namespace HardDev.AsTask
 
         public static string GetCurrentAsyncContextName()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return QAsyncContext.Current?.Name;
         }
 
         public static bool ContainsAsyncContextThread(int id)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return AsyncContextThreadIdByName.ContainsValue(id);
         }
 
         public static bool ContainsAsyncContextThread(string name)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return AsyncContextThreadIdByName.ContainsKey(name);
         }
 
@@ -205,6 +276,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static bool IsAsyncContextThread()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return QAsyncContext.Current != null;
         }
 
@@ -213,6 +287,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static bool IsAsyncContextThread(int id)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             if (!ContainsAsyncContextThread(id))
                 return false;
 
@@ -224,6 +301,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static IAwaiter ToAsyncContextThread(int id)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return AsyncContextThreads[id].Context.Awaiter;
         }
 
@@ -232,6 +312,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static Task ToAsyncContextThread(int id, Action action)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return AsyncContextThreads[id].Context.SynchronizationContext.PostAsync(action).ExceptionHandler();
         }
 
@@ -244,6 +327,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static bool IsBackgroundThread()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return IsAsyncContextThread(_backgroundThreadId);
         }
 
@@ -252,6 +338,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static IAwaiter ToBackgroundThread()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return ToAsyncContextThread(_backgroundThreadId);
         }
 
@@ -260,6 +349,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static Task ToBackgroundThread(Action action)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return ToAsyncContextThread(_backgroundThreadId, action);
         }
 
@@ -272,6 +364,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static IAwaiter ToNormalThreadPool()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _normaThreadPool.Awaiter;
         }
 
@@ -280,6 +375,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static Task ToNormalThreadPool(Action action)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _normaThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
         }
 
@@ -288,6 +386,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static IAwaiter ToBlockingThreadPool()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _blockingThreadPool.Awaiter;
         }
 
@@ -296,6 +397,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static Task ToBlockingThreadPool(Action action)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _blockingThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
         }
 
@@ -304,6 +408,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static bool IsThreadPool()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return IsNormalThreadPool() || IsBlockingThreadPool();
         }
 
@@ -312,6 +419,9 @@ namespace HardDev.AsTask
         /// </summary>
         public static bool IsNormalThreadPool()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return TaskScheduler.Current == _normaThreadPool;
         }
 
@@ -320,16 +430,25 @@ namespace HardDev.AsTask
         /// </summary>
         public static bool IsBlockingThreadPool()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return TaskScheduler.Current == _blockingThreadPool;
         }
 
         public static TaskScheduler GetNormalTaskScheduler()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _normaThreadPool;
         }
 
         public static TaskScheduler GetBlockingTaskScheduler()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return _blockingThreadPool;
         }
 
