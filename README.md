@@ -2,6 +2,9 @@
 
 A helper library for  multi-threaded async/await.
 
+# Examples
+https://github.com/CriDos/AsTaskExamples
+
 # NuGet
 Check out AsTask on #NuGet: https://www.nuget.org/packages/AsTask
 
