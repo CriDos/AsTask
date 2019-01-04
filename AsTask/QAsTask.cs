@@ -436,7 +436,7 @@ namespace HardDev.AsTask
             return TaskScheduler.Current == _blockingThreadPool;
         }
 
-        public static TaskScheduler GetNormalTaskScheduler()
+        public static QLimitedTaskScheduler GetNormalTaskScheduler()
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
@@ -444,7 +444,7 @@ namespace HardDev.AsTask
             return _normaThreadPool;
         }
 
-        public static TaskScheduler GetBlockingTaskScheduler()
+        public static QLimitedTaskScheduler GetBlockingTaskScheduler()
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
