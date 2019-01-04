@@ -47,20 +47,16 @@ namespace HardDev.AsTask.TaskSchedulers
             {
                 _tasks.AddLast(task);
 
-                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel) return;
+                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel)
+                    return;
 
-                ++_delegatesQueuedOrRunning;
-                NotifyThreadPoolOfPendingWork();
+                _delegatesQueuedOrRunning++;
+                Task.Factory.Run(NotifyThreadPoolOfPendingWork);
             }
         }
 
         // Inform the ThreadPool that there's work to be executed for this scheduler. 
         private void NotifyThreadPoolOfPendingWork()
-        {
-            Task.Factory.Run(Execute);
-        }
-
-        private void Execute()
         {
             // Note that the current thread is now processing work items.
             // This is necessary to enable inlining of tasks into this thread.
@@ -77,7 +73,7 @@ namespace HardDev.AsTask.TaskSchedulers
                         // note that we're done processing, and get out.
                         if (_tasks.Count == 0)
                         {
-                            --_delegatesQueuedOrRunning;
+                            _delegatesQueuedOrRunning--;
                             break;
                         }
 
@@ -114,14 +110,15 @@ namespace HardDev.AsTask.TaskSchedulers
         // Attempt to remove a previously scheduled task from the scheduler. 
         protected override bool TryDequeue(Task task)
         {
-            lock (_tasks) return _tasks.Remove(task);
+            lock (_tasks)
+                return _tasks.Remove(task);
         }
-
 
         // Gets an enumerable of the tasks currently scheduled on this scheduler. 
         protected override IEnumerable<Task> GetScheduledTasks()
         {
-            lock (_tasks) return _tasks;
+            lock (_tasks)
+                return _tasks;
         }
     }
 }

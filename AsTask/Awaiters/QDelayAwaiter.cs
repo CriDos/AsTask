@@ -27,7 +27,7 @@ namespace HardDev.AsTask.Awaiters
 
         public async void OnCompleted(Action action)
         {
-            await Task.Delay(_ms);
+            await Task.Delay(_ms).ConfigureAwait(true);
             action();
         }
 

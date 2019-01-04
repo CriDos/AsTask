@@ -21,7 +21,8 @@ namespace HardDev.AsTask.TaskHelpers
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            return @this.StartNew(action, @this.CancellationToken, @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
+            return @this.StartNew(action, @this.CancellationToken,
+                @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
                 @this.Scheduler ?? TaskScheduler.Default);
         }
 
@@ -38,7 +39,8 @@ namespace HardDev.AsTask.TaskHelpers
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            return @this.StartNew(action, @this.CancellationToken, @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
+            return @this.StartNew(action, @this.CancellationToken,
+                @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
                 @this.Scheduler ?? TaskScheduler.Default);
         }
 
@@ -55,7 +57,8 @@ namespace HardDev.AsTask.TaskHelpers
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            return @this.StartNew(action, @this.CancellationToken, @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
+            return @this.StartNew(action, @this.CancellationToken,
+                @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
                 @this.Scheduler ?? TaskScheduler.Default).Unwrap();
         }
 
@@ -72,7 +75,8 @@ namespace HardDev.AsTask.TaskHelpers
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            return @this.StartNew(action, @this.CancellationToken, @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
+            return @this.StartNew(action, @this.CancellationToken,
+                @this.CreationOptions | TaskCreationOptions.DenyChildAttach,
                 @this.Scheduler ?? TaskScheduler.Default).Unwrap();
         }
     }

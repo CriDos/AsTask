@@ -22,6 +22,11 @@ namespace HardDev.AsTask.Context
         public int Id => Context.Id;
 
         /// <summary>
+        /// Gets the <see cref="TaskFactory"/> for this thread, which can be used to schedule work to this thread.
+        /// </summary>
+        public TaskFactory Factory => Context.Factory;
+
+        /// <summary>
         /// The child thread.
         /// </summary>
         private readonly Task _thread;
@@ -37,10 +42,10 @@ namespace HardDev.AsTask.Context
 
             CreatesDisposableContext(Context);
 
-            _thread = Task.Factory.StartNew(Execute, CancellationToken.None, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
+            _thread = Task.Factory.StartNew(Execute, CancellationToken.None,
+                TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
                 TaskScheduler.Default);
         }
-
 
         /// <summary>
         /// Requests the thread to exit and returns a task representing the exit of the thread. The thread will exit when all outstanding asynchronous operations complete.
@@ -58,11 +63,6 @@ namespace HardDev.AsTask.Context
         {
             JoinAsync().WaitAndUnwrapException();
         }
-
-        /// <summary>
-        /// Gets the <see cref="TaskFactory"/> for this thread, which can be used to schedule work to this thread.
-        /// </summary>
-        public TaskFactory Factory => Context.Factory;
 
         private void Execute()
         {

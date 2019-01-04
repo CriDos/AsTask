@@ -280,7 +280,7 @@ namespace HardDev.AsTask.Deque
 
         #region ObjectListImplementations
 
-        private static bool IsT(object value)
+        private static bool IsType(object value)
         {
             if (value is T)
                 return true;
@@ -293,7 +293,7 @@ namespace HardDev.AsTask.Deque
         {
             if (value == null && default(T) != null)
                 throw new ArgumentNullException(nameof(value), "Value cannot be null.");
-            if (!IsT(value))
+            if (!IsType(value))
                 throw new ArgumentException("Value is of incorrect type.", nameof(value));
             AddToBack((T) value);
             return Count - 1;
@@ -301,19 +301,19 @@ namespace HardDev.AsTask.Deque
 
         bool IList.Contains(object value)
         {
-            return IsT(value) && ((ICollection<T>) this).Contains((T) value);
+            return IsType(value) && ((ICollection<T>) this).Contains((T) value);
         }
 
         int IList.IndexOf(object value)
         {
-            return IsT(value) ? IndexOf((T) value) : -1;
+            return IsType(value) ? IndexOf((T) value) : -1;
         }
 
         void IList.Insert(int index, object value)
         {
             if (value == null && default(T) != null)
                 throw new ArgumentNullException(nameof(value), "Value cannot be null.");
-            if (!IsT(value))
+            if (!IsType(value))
                 throw new ArgumentException("Value is of incorrect type.", nameof(value));
             Insert(index, (T) value);
         }
@@ -324,7 +324,7 @@ namespace HardDev.AsTask.Deque
 
         void IList.Remove(object value)
         {
-            if (IsT(value))
+            if (IsType(value))
                 Remove((T) value);
         }
 
@@ -336,7 +336,7 @@ namespace HardDev.AsTask.Deque
             {
                 if (value == null && default(T) != null)
                     throw new ArgumentNullException(nameof(value), "Value cannot be null.");
-                if (!IsT(value))
+                if (!IsType(value))
                     throw new ArgumentException("Value is of incorrect type.", nameof(value));
                 this[index] = (T) value;
             }
