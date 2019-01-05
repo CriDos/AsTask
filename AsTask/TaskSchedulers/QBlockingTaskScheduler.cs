@@ -94,10 +94,6 @@ namespace HardDev.AsTask.TaskSchedulers
             // Indicate that no new tasks will be coming in
             _tasks.CompleteAdding();
 
-            // Wait for all threads to finish processing tasks
-            foreach (var thread in _threads)
-                thread.Wait(20);
-
             // Cleanup
             _tasks.Dispose();
             _tasks = null;
