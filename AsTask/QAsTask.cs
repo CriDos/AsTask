@@ -11,7 +11,6 @@ namespace HardDev.AsTask
 {
     public static class QAsTask
     {
-        public const int MAX_BLOCKING_THREAD_POOL = 16;
         public static int OptimalDegreeOfParallelism => Math.Max(Environment.ProcessorCount - 1, 1);
 
         private const string NOT_INITIALIZE_MSG = "First need to initialize AsTask.";
@@ -39,9 +38,9 @@ namespace HardDev.AsTask
                 return;
 
             if (enableOptimalParallelism)
-                Initialize(OptimalDegreeOfParallelism, MAX_BLOCKING_THREAD_POOL, mainSynContext);
+                Initialize(OptimalDegreeOfParallelism, int.MaxValue, mainSynContext);
             else
-                Initialize(Environment.ProcessorCount, MAX_BLOCKING_THREAD_POOL, mainSynContext);
+                Initialize(Environment.ProcessorCount, int.MaxValue, mainSynContext);
         }
 
         public static void Initialize(int maxNormalThreadPool, int maxBlockingThreadPool, SynchronizationContext mainSynContext = null)

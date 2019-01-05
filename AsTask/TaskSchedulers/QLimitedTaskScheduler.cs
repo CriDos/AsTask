@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using HardDev.AsTask.Awaiters;
 using HardDev.AsTask.TaskHelpers;
@@ -15,6 +16,8 @@ namespace HardDev.AsTask.TaskSchedulers
     {
         public readonly TaskFactory TaskFactory;
         public readonly IAwaiter Awaiter;
+        public int CountRunningTasks => _delegatesQueuedOrRunning;
+        public bool IsWorking { get; private set; } = true;
 
         // The maximum concurrency level allowed by this scheduler. 
         public override int MaximumConcurrencyLevel { get; }
@@ -24,18 +27,31 @@ namespace HardDev.AsTask.TaskSchedulers
         private static bool _currentThreadIsProcessingItems;
 
         // The list of tasks to be executed 
-        private readonly LinkedList<Task> _tasks = new LinkedList<Task>(); // protected by lock(_tasks)
+        private readonly LinkedList<Task> _tasksToRun = new LinkedList<Task>();
 
         // Indicates whether the scheduler is currently processing work items. 
         private int _delegatesQueuedOrRunning;
+
 
         public QLimitedTaskScheduler(int maxDegreeOfParallelism)
         {
             if (maxDegreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+
             MaximumConcurrencyLevel = maxDegreeOfParallelism;
             TaskFactory = new TaskFactory(this);
             Awaiter = new QTaskFactoryAwaiter(TaskFactory);
+        }
+
+        public void SetWorkingState(bool isWorking)
+        {
+            IsWorking = isWorking;
+        }
+
+        public void ClearTasksToRun()
+        {
+            lock (_tasksToRun)
+                _tasksToRun.Clear();
         }
 
         // Queues a task to the scheduler. 
@@ -43,11 +59,11 @@ namespace HardDev.AsTask.TaskSchedulers
         {
             // Add the task to the list of tasks to be processed.  If there aren't enough 
             // delegates currently queued or running to process tasks, schedule another. 
-            lock (_tasks)
+            lock (_tasksToRun)
             {
-                _tasks.AddLast(task);
+                _tasksToRun.AddLast(task);
 
-                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel)
+                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel || !IsWorking)
                     return;
 
                 _delegatesQueuedOrRunning++;
@@ -67,19 +83,19 @@ namespace HardDev.AsTask.TaskSchedulers
                 while (true)
                 {
                     Task item;
-                    lock (_tasks)
+                    lock (_tasksToRun)
                     {
                         // When there are no more items to be processed,
                         // note that we're done processing, and get out.
-                        if (_tasks.Count == 0)
+                        if (_tasksToRun.Count == 0)
                         {
                             _delegatesQueuedOrRunning--;
                             break;
                         }
 
                         // Get the next item from the queue
-                        item = _tasks.First.Value;
-                        _tasks.RemoveFirst();
+                        item = _tasksToRun.First.Value;
+                        _tasksToRun.RemoveFirst();
                     }
 
                     // Execute the task we pulled out of the queue
@@ -110,15 +126,15 @@ namespace HardDev.AsTask.TaskSchedulers
         // Attempt to remove a previously scheduled task from the scheduler. 
         protected override bool TryDequeue(Task task)
         {
-            lock (_tasks)
-                return _tasks.Remove(task);
+            lock (_tasksToRun)
+                return _tasksToRun.Remove(task);
         }
 
         // Gets an enumerable of the tasks currently scheduled on this scheduler. 
         protected override IEnumerable<Task> GetScheduledTasks()
         {
-            lock (_tasks)
-                return _tasks;
+            lock (_tasksToRun)
+                return _tasksToRun;
         }
     }
 }

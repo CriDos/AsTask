@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using HardDev.AsTask;
 using HardDev.AsTask.Awaiters;
 using HardDev.AsTask.Context;
+using HardDev.AsTask.TaskHelpers;
 using NUnit.Framework;
 
 namespace AsTaskTests
@@ -11,15 +13,16 @@ namespace AsTaskTests
     [TestFixture]
     public class Tests
     {
+        private const int MAX_THREADS = 64;
         private readonly int _newContextThreadId;
 
         public Tests()
         {
-            QAsTask.Initialize();
+            QAsTask.Initialize(MAX_THREADS, MAX_THREADS);
             _newContextThreadId = QAsTask.CreateAsyncContextThread("NewContextThread");
         }
 
-        [Test]
+        [Test, Order(0)]
         public async Task TestSwitchingToContexts()
         {
             await QAsTask.ToMainThread();
@@ -38,7 +41,7 @@ namespace AsTaskTests
             Assert.True(QAsTask.GetCurrentContextType() == QAsyncContextType.BlockingThreadPool);
         }
 
-        [Test]
+        [Test, Order(1)]
         public async Task TestToMainThread()
         {
             await QAsTask.ToMainThread();
@@ -46,7 +49,7 @@ namespace AsTaskTests
             Assert.True(QAsTask.IsMainThread(), "This is not the MainThread!");
         }
 
-        [Test]
+        [Test, Order(2)]
         public async Task TestToBackgroundThread()
         {
             await QAsTask.ToBackgroundThread();
@@ -54,7 +57,7 @@ namespace AsTaskTests
             Assert.True(QAsTask.IsBackgroundThread(), "This is not the BackgroundThread!");
         }
 
-        [Test]
+        [Test, Order(3)]
         public async Task TestToAsyncContextThread()
         {
             await QAsTask.ToAsyncContextThread(_newContextThreadId);
@@ -63,7 +66,7 @@ namespace AsTaskTests
             Assert.True(QAsTask.IsAsyncContextThread(_newContextThreadId), $"This is not the AsyncContextThread({_newContextThreadId})!");
         }
 
-        [Test]
+        [Test, Order(4)]
         public async Task TestToNormalThreadPool()
         {
             await QAsTask.ToNormalThreadPool();
@@ -72,7 +75,7 @@ namespace AsTaskTests
             Assert.True(QAsTask.IsNormalThreadPool(), "This is not the NormalThreadPool!");
         }
 
-        [Test]
+        [Test, Order(5)]
         public async Task TestToBlockingThreadPool()
         {
             await QAsTask.ToBlockingThreadPool();
@@ -81,7 +84,7 @@ namespace AsTaskTests
             Assert.True(QAsTask.IsBlockingThreadPool(), "This is not the BlockingThreadPool!");
         }
 
-        [Test]
+        [Test, Order(6)]
         public async Task TestDelayAwaiterMainThread()
         {
             await QAsTask.ToMainThread();
@@ -93,7 +96,7 @@ namespace AsTaskTests
             Assert.True(stopwatch.ElapsedMilliseconds >= 80 && stopwatch.ElapsedMilliseconds <= 150);
         }
 
-        [Test]
+        [Test, Order(7)]
         public async Task TestDelayAwaiterBackgroundThread()
         {
             await QAsTask.ToBackgroundThread();
@@ -105,7 +108,7 @@ namespace AsTaskTests
             Assert.True(stopwatch.ElapsedMilliseconds >= 80 && stopwatch.ElapsedMilliseconds <= 150);
         }
 
-        [Test]
+        [Test, Order(8)]
         public async Task TestDelayAwaiterNormalThreadPool()
         {
             await QAsTask.ToNormalThreadPool();
@@ -117,7 +120,7 @@ namespace AsTaskTests
             Assert.True(stopwatch.ElapsedMilliseconds >= 80 && stopwatch.ElapsedMilliseconds <= 150);
         }
 
-        [Test]
+        [Test, Order(9)]
         public async Task TestDelayAwaiterBlockingThreadPool()
         {
             await QAsTask.ToBlockingThreadPool();
@@ -129,7 +132,7 @@ namespace AsTaskTests
             Assert.True(stopwatch.ElapsedMilliseconds >= 80 && stopwatch.ElapsedMilliseconds <= 150);
         }
 
-        [Test]
+        [Test, Order(10)]
         public async Task TestMoreSwitching()
         {
             for (var i = 0; i < 1000; i++)
@@ -168,7 +171,7 @@ namespace AsTaskTests
             }
         }
 
-        [Test]
+        [Test, Order(11)]
         public async Task TestExceptions1()
         {
             for (var i = 0; i < 5; i++)
@@ -206,7 +209,7 @@ namespace AsTaskTests
             }
         }
 
-        [Test]
+        [Test, Order(12)]
         public async Task TestExceptions2()
         {
             for (var i = 0; i < 5; i++)
@@ -244,7 +247,7 @@ namespace AsTaskTests
             }
         }
 
-        [Test]
+        [Test, Order(13)]
         public void TestExceptions3()
         {
             QAsTask.SetExceptionHandler(task => Console.WriteLine($"[UnhandledException] {task.Exception?.GetBaseException().TargetSite}"));
@@ -274,6 +277,40 @@ namespace AsTaskTests
                         QAsTask.ToBlockingThreadPool(() => throw new ApplicationException("ToBlockingThreadPool"));
                         break;
                 }
+            }
+        }
+
+        [Test, Order(14)]
+        public async Task TestMaxBlockingThreadPool()
+        {
+            for (var i = 0; i < MAX_THREADS; i++)
+                BlockMethod().End();
+
+            var blocking = QAsTask.GetBlockingTaskScheduler();
+            while (blocking.CountRunningTasks < MAX_THREADS)
+                await 1;
+
+            async Task BlockMethod()
+            {
+                await QAsTask.ToBlockingThreadPool();
+                Thread.Sleep(999999999);
+            }
+        }
+
+        [Test, Order(15)]
+        public async Task TestMaxNormalThreadPool()
+        {
+            for (var i = 0; i < MAX_THREADS; i++)
+                BlockMethod().End();
+
+            var normal = QAsTask.GetNormalTaskScheduler();
+            while (normal.CountRunningTasks < MAX_THREADS)
+                await 1;
+
+            async Task BlockMethod()
+            {
+                await QAsTask.ToNormalThreadPool();
+                Thread.Sleep(999999999);
             }
         }
     }
