@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using HardDev.AsTask.Awaiters;
-using HardDev.AsTask.TaskHelpers;
 
 namespace HardDev.AsTask.TaskSchedulers
 {
@@ -12,12 +10,10 @@ namespace HardDev.AsTask.TaskSchedulers
     /// Provides a task scheduler that ensures a maximum concurrency level while
     /// running on top of the thread pool.
     /// </summary>
-    public sealed class QLimitedTaskScheduler : TaskScheduler
+    public sealed class QNormalTaskScheduler : TaskScheduler
     {
         public readonly TaskFactory TaskFactory;
         public readonly IAwaiter Awaiter;
-        public int CountRunningTasks => _delegatesQueuedOrRunning;
-        public bool IsWorking { get; private set; } = true;
 
         // The maximum concurrency level allowed by this scheduler. 
         public override int MaximumConcurrencyLevel { get; }
@@ -33,7 +29,7 @@ namespace HardDev.AsTask.TaskSchedulers
         private int _delegatesQueuedOrRunning;
 
 
-        public QLimitedTaskScheduler(int maxDegreeOfParallelism)
+        public QNormalTaskScheduler(int maxDegreeOfParallelism)
         {
             if (maxDegreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
@@ -41,17 +37,6 @@ namespace HardDev.AsTask.TaskSchedulers
             MaximumConcurrencyLevel = maxDegreeOfParallelism;
             TaskFactory = new TaskFactory(this);
             Awaiter = new QTaskFactoryAwaiter(TaskFactory);
-        }
-
-        public void SetWorkingState(bool isWorking)
-        {
-            IsWorking = isWorking;
-        }
-
-        public void ClearTasksToRun()
-        {
-            lock (_tasksToRun)
-                _tasksToRun.Clear();
         }
 
         // Queues a task to the scheduler. 
@@ -63,11 +48,11 @@ namespace HardDev.AsTask.TaskSchedulers
             {
                 _tasksToRun.AddLast(task);
 
-                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel || !IsWorking)
+                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel)
                     return;
 
                 _delegatesQueuedOrRunning++;
-                Task.Factory.Run(NotifyThreadPoolOfPendingWork);
+                Task.Run(NotifyThreadPoolOfPendingWork);
             }
         }
 

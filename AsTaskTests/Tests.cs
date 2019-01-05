@@ -279,39 +279,5 @@ namespace AsTaskTests
                 }
             }
         }
-
-        [Test, Order(14)]
-        public async Task TestMaxBlockingThreadPool()
-        {
-            for (var i = 0; i < MAX_THREADS; i++)
-                BlockMethod().End();
-
-            var blocking = QAsTask.GetBlockingTaskScheduler();
-            while (blocking.CountRunningTasks < MAX_THREADS)
-                await 1;
-
-            async Task BlockMethod()
-            {
-                await QAsTask.ToBlockingThreadPool();
-                Thread.Sleep(999999999);
-            }
-        }
-
-        [Test, Order(15)]
-        public async Task TestMaxNormalThreadPool()
-        {
-            for (var i = 0; i < MAX_THREADS; i++)
-                BlockMethod().End();
-
-            var normal = QAsTask.GetNormalTaskScheduler();
-            while (normal.CountRunningTasks < MAX_THREADS)
-                await 1;
-
-            async Task BlockMethod()
-            {
-                await QAsTask.ToNormalThreadPool();
-                Thread.Sleep(999999999);
-            }
-        }
     }
 }
