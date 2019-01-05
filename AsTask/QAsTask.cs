@@ -66,6 +66,8 @@ namespace HardDev.AsTask
                 else
                     _mainAwaiter = new QSynchronizationContextAwaiter(_mainContext);
 
+                SynchronizationContext.SetSynchronizationContext(_mainContext);
+
                 _normaThreadPool = new QNormalTaskScheduler(maxNormalThreadPool);
                 _blockingThreadPool = new QBlockingTaskScheduler(maxBlockingThreadPool);
 
