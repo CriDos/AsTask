@@ -11,8 +11,8 @@ namespace HardDev.AsTask
 {
     public static class QAsTask
     {
-        public const int MAX_BLOCKING_THREAD_POOL = 16;
         public static int OptimalDegreeOfParallelism => Math.Max(Environment.ProcessorCount - 1, 1);
+        public const int MAX_BLOCKING_THREAD_POOL = 32;
 
         private const string NOT_INITIALIZE_MSG = "First need to initialize AsTask.";
 
@@ -22,8 +22,8 @@ namespace HardDev.AsTask
 
         private static int _backgroundThreadId;
 
-        private static QLimitedTaskScheduler _normaThreadPool;
-        private static QLimitedTaskScheduler _blockingThreadPool;
+        private static QNormalTaskScheduler _normaThreadPool;
+        private static QBlockingTaskScheduler _blockingThreadPool;
 
         private static readonly Dictionary<int, QAsyncContextThread> AsyncContextThreads = new Dictionary<int, QAsyncContextThread>();
         private static readonly Dictionary<string, int> AsyncContextThreadIdByName = new Dictionary<string, int>();
@@ -66,8 +66,10 @@ namespace HardDev.AsTask
                 else
                     _mainAwaiter = new QSynchronizationContextAwaiter(_mainContext);
 
-                _normaThreadPool = new QLimitedTaskScheduler(maxNormalThreadPool);
-                _blockingThreadPool = new QLimitedTaskScheduler(maxBlockingThreadPool);
+                SynchronizationContext.SetSynchronizationContext(_mainContext);
+
+                _normaThreadPool = new QNormalTaskScheduler(maxNormalThreadPool);
+                _blockingThreadPool = new QBlockingTaskScheduler(maxBlockingThreadPool);
 
                 _backgroundThreadId = CreateAsyncContextThread("BackgroundThread");
             }
@@ -436,7 +438,7 @@ namespace HardDev.AsTask
             return TaskScheduler.Current == _blockingThreadPool;
         }
 
-        public static TaskScheduler GetNormalTaskScheduler()
+        public static QNormalTaskScheduler GetNormalTaskScheduler()
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
@@ -444,7 +446,7 @@ namespace HardDev.AsTask
             return _normaThreadPool;
         }
 
-        public static TaskScheduler GetBlockingTaskScheduler()
+        public static QBlockingTaskScheduler GetBlockingTaskScheduler()
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);

@@ -27,6 +27,7 @@ namespace HardDev.AsTask.TaskHelpers
 
             if (task.IsFaulted)
                 return task.Exception != null && @this.TrySetException(task.Exception.InnerExceptions);
+            
             if (task.IsCanceled)
             {
                 try
@@ -62,8 +63,7 @@ namespace HardDev.AsTask.TaskHelpers
 
             if (task.IsFaulted)
             {
-                Debug.Assert(task.Exception != null, "task.Exception != null");
-                return @this.TrySetException(task.Exception.InnerExceptions);
+                return task.Exception != null && @this.TrySetException(task.Exception.InnerExceptions);
             }
 
             if (task.IsCanceled)

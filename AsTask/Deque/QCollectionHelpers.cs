@@ -8,17 +8,19 @@ namespace HardDev.AsTask.Deque
     {
         public static IReadOnlyCollection<T> ReifyCollection<T>(IEnumerable<T> source)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-
-            if (source is IReadOnlyCollection<T> result)
-                return result;
-            if (source is ICollection<T> collection)
-                return new CollectionWrapper<T>(collection);
-            if (source is ICollection nonGenericCollection)
-                return new NonGenericCollectionWrapper<T>(nonGenericCollection);
-
-            return new List<T>(source);
+            switch (source)
+            {
+                case null:
+                    throw new ArgumentNullException(nameof(source));
+                case IReadOnlyCollection<T> result:
+                    return result;
+                case ICollection<T> collection:
+                    return new CollectionWrapper<T>(collection);
+                case ICollection nonGenericCollection:
+                    return new NonGenericCollectionWrapper<T>(nonGenericCollection);
+                default:
+                    return new List<T>(source);
+            }
         }
 
         private sealed class NonGenericCollectionWrapper<T> : IReadOnlyCollection<T>

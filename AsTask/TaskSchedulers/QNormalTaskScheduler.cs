@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using HardDev.AsTask.Awaiters;
-using HardDev.AsTask.TaskHelpers;
 
 namespace HardDev.AsTask.TaskSchedulers
 {
@@ -11,7 +10,7 @@ namespace HardDev.AsTask.TaskSchedulers
     /// Provides a task scheduler that ensures a maximum concurrency level while
     /// running on top of the thread pool.
     /// </summary>
-    public sealed class QLimitedTaskScheduler : TaskScheduler
+    public sealed class QNormalTaskScheduler : TaskScheduler
     {
         public readonly TaskFactory TaskFactory;
         public readonly IAwaiter Awaiter;
@@ -24,15 +23,17 @@ namespace HardDev.AsTask.TaskSchedulers
         private static bool _currentThreadIsProcessingItems;
 
         // The list of tasks to be executed 
-        private readonly LinkedList<Task> _tasks = new LinkedList<Task>(); // protected by lock(_tasks)
+        private readonly LinkedList<Task> _tasksToRun = new LinkedList<Task>();
 
         // Indicates whether the scheduler is currently processing work items. 
         private int _delegatesQueuedOrRunning;
 
-        public QLimitedTaskScheduler(int maxDegreeOfParallelism)
+
+        public QNormalTaskScheduler(int maxDegreeOfParallelism)
         {
             if (maxDegreeOfParallelism < 1)
                 throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+
             MaximumConcurrencyLevel = maxDegreeOfParallelism;
             TaskFactory = new TaskFactory(this);
             Awaiter = new QTaskFactoryAwaiter(TaskFactory);
@@ -43,24 +44,20 @@ namespace HardDev.AsTask.TaskSchedulers
         {
             // Add the task to the list of tasks to be processed.  If there aren't enough 
             // delegates currently queued or running to process tasks, schedule another. 
-            lock (_tasks)
+            lock (_tasksToRun)
             {
-                _tasks.AddLast(task);
+                _tasksToRun.AddLast(task);
 
-                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel) return;
+                if (_delegatesQueuedOrRunning >= MaximumConcurrencyLevel)
+                    return;
 
-                ++_delegatesQueuedOrRunning;
-                NotifyThreadPoolOfPendingWork();
+                _delegatesQueuedOrRunning++;
+                Task.Run(NotifyThreadPoolOfPendingWork);
             }
         }
 
         // Inform the ThreadPool that there's work to be executed for this scheduler. 
         private void NotifyThreadPoolOfPendingWork()
-        {
-            Task.Factory.Run(Execute);
-        }
-
-        private void Execute()
         {
             // Note that the current thread is now processing work items.
             // This is necessary to enable inlining of tasks into this thread.
@@ -71,19 +68,19 @@ namespace HardDev.AsTask.TaskSchedulers
                 while (true)
                 {
                     Task item;
-                    lock (_tasks)
+                    lock (_tasksToRun)
                     {
                         // When there are no more items to be processed,
                         // note that we're done processing, and get out.
-                        if (_tasks.Count == 0)
+                        if (_tasksToRun.Count == 0)
                         {
-                            --_delegatesQueuedOrRunning;
+                            _delegatesQueuedOrRunning--;
                             break;
                         }
 
                         // Get the next item from the queue
-                        item = _tasks.First.Value;
-                        _tasks.RemoveFirst();
+                        item = _tasksToRun.First.Value;
+                        _tasksToRun.RemoveFirst();
                     }
 
                     // Execute the task we pulled out of the queue
@@ -114,14 +111,15 @@ namespace HardDev.AsTask.TaskSchedulers
         // Attempt to remove a previously scheduled task from the scheduler. 
         protected override bool TryDequeue(Task task)
         {
-            lock (_tasks) return _tasks.Remove(task);
+            lock (_tasksToRun)
+                return _tasksToRun.Remove(task);
         }
-
 
         // Gets an enumerable of the tasks currently scheduled on this scheduler. 
         protected override IEnumerable<Task> GetScheduledTasks()
         {
-            lock (_tasks) return _tasks;
+            lock (_tasksToRun)
+                return _tasksToRun;
         }
     }
 }

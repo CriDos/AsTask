@@ -20,7 +20,7 @@ namespace HardDev.AsTask.Awaiters
 
         public void OnCompleted(Action action)
         {
-            _context.PostAsync(action).ExceptionHandlerWR();
+            _context.PostAsync(action).ConfigureAwait(false);
         }
 
         public void GetResult()

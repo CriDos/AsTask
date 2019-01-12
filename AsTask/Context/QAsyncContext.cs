@@ -256,7 +256,7 @@ namespace HardDev.AsTask.Context
 
         public override int GetHashCode()
         {
-            return (Name != null ? Name.GetHashCode() : 0);
+            return Name != null ? Name.GetHashCode() : 0;
         }
 
         public static bool operator ==(QAsyncContext left, QAsyncContext right)

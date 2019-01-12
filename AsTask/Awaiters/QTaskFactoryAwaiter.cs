@@ -20,7 +20,7 @@ namespace HardDev.AsTask.Awaiters
 
         public void OnCompleted(Action action)
         {
-            _taskFactory.StartNew(action).ExceptionHandlerWR();
+            _taskFactory.Run(action).ConfigureAwait(false);
         }
 
         public void GetResult()

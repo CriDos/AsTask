@@ -88,7 +88,7 @@ namespace HardDev.AsTask.Context
         /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public override int GetHashCode()
         {
-            return (Context != null ? Context.GetHashCode() : 0);
+            return Context != null ? Context.GetHashCode() : 0;
         }
 
         /// <summary>
