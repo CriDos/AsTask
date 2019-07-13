@@ -19,7 +19,7 @@
         <PackageProjectUrl>https://github.com/CriDos/AsTask</PackageProjectUrl>
         <PackageTags>multithreading, async-await, thread-pool, thread</PackageTags>
         <RepositoryType />
-        <PackageVersion>2.0.0</PackageVersion>
+        <PackageVersion>2.0.1</PackageVersion>
         <NullableContextOptions>disable</NullableContextOptions>
     </PropertyGroup>
 

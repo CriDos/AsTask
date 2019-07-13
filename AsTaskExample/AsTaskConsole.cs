@@ -14,8 +14,7 @@ namespace AsTaskExample
         public static async Task Main()
         {
             WriteLine("Initialize AsTask and capture the context of the main context.");
-            AsTask.Initialize();
-            await AsTask.ToMainContext();
+            await AsTask.Initialize();
 
             WriteLine("Assign an exception handler.");
             AsExceptionHandler.SetExceptionHandler(task =>

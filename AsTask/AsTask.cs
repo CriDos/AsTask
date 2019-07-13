@@ -21,7 +21,6 @@ namespace HardDev.AsTaskLib
         private static ThreadPoolScheduler _normalThreadPool;
         private static ThreadPoolScheduler _blockingThreadPool;
 
-        private static readonly object ContextLocker = new object();
         private static readonly Dictionary<int, AsContext> ContextById = new Dictionary<int, AsContext>();
         private static readonly Dictionary<string, AsContext> ContextByName = new Dictionary<string, AsContext>();
 
@@ -30,29 +29,23 @@ namespace HardDev.AsTaskLib
 
         #region Initialize
 
-        public static void Initialize(int maxNormalThreadPool = 0, int maxBlockingThreadPool = 64, SynchronizationContext mc = null)
+        public static IAwaiter Initialize(int maxNormalThreadPool = 0, int maxBlockingThreadPool = 64, SynchronizationContext mc = null)
         {
-            if (_initialized)
-                return;
-
-            if (!CheckSupportMultithreading())
-                throw new PlatformNotSupportedException("Target platform not supported multithreading.");
-
-            _initialized = true;
-
-            try
+            if (!_initialized)
             {
+                if (!CheckSupportMultithreading())
+                    throw new PlatformNotSupportedException("Target platform not supported multithreading.");
+
                 _mainContextId = CreateContext("MainContext", mc ?? SynchronizationContext.Current);
                 _backgroundContextId = CreateContext("BackgroundContext");
 
                 _normalThreadPool = new ThreadPoolScheduler(maxNormalThreadPool <= 0 ? OptimalDegreeOfParallelism : maxNormalThreadPool);
                 _blockingThreadPool = new ThreadPoolScheduler(maxBlockingThreadPool);
+
+                _initialized = true;
             }
-            catch (Exception)
-            {
-                _initialized = false;
-                throw;
-            }
+
+            return ToContext(_mainContextId);
         }
 
         #endregion
@@ -61,9 +54,6 @@ namespace HardDev.AsTaskLib
 
         public static string WhereAmI()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             var contextName = GetCurrentContextName();
             switch (GetCurrentContextType())
             {
@@ -84,9 +74,6 @@ namespace HardDev.AsTaskLib
 
         public static AsContextType GetCurrentContextType()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             if (IsThreadPool())
             {
                 if (IsNormalThreadPool())
@@ -124,105 +111,63 @@ namespace HardDev.AsTaskLib
 
         public static int CreateContext(string name, SynchronizationContext context = null)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+            if (ContextByName.ContainsKey(name))
+                throw new ArgumentException($"AsContext name is already exists: {name}");
 
-            lock (ContextLocker)
-            {
-                if (ContextByName.ContainsKey(name))
-                    throw new ArgumentException($"AsContext name is already exists: {name}");
+            var asContext = new AsContext(name, context);
+            ContextById.Add(asContext.Id, asContext);
+            ContextByName.Add(name, asContext);
 
-                var asContext = new AsContext(name, context);
-                ContextById.Add(asContext.Id, asContext);
-                ContextByName.Add(name, asContext);
-
-                return asContext.Id;
-            }
+            return asContext.Id;
         }
 
         public static void RemoveContext(int id)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+            if (!ContextById.TryGetValue(id, out var context))
+                throw new ArgumentException($"AsContext id is not exists: {id}");
 
-            lock (ContextLocker)
-            {
-                if (!ContextById.TryGetValue(id, out var context))
-                    throw new ArgumentException($"AsContext id is not exists: {id}");
+            ContextById.Remove(id);
+            ContextByName.Remove(context.Name);
 
-                ContextById.Remove(id);
-                ContextByName.Remove(context.Name);
-
-                context.AllowToExit();
-                context.Dispose();
-            }
+            context.AllowToExit();
+            context.Dispose();
         }
 
         public static void RemoveContext(string name)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+            if (!ContextByName.TryGetValue(name, out var context))
+                throw new ArgumentException($"AsContext name is not exists: {name}");
 
-            lock (ContextLocker)
-            {
-                if (!ContextByName.TryGetValue(name, out var context))
-                    throw new ArgumentException($"AsContext name is not exists: {name}");
+            ContextByName.Remove(name);
+            ContextById.Remove(context.Id);
 
-                ContextByName.Remove(name);
-                ContextById.Remove(context.Id);
-
-                context.AllowToExit();
-                context.Dispose();
-            }
+            context.AllowToExit();
+            context.Dispose();
         }
 
         public static int? GetCurrentContextId()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return AsContext.Current?.Id;
         }
 
         public static string GetCurrentContextName()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return AsContext.Current?.Name;
         }
 
         public static bool ContainsContext(int id)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
-            lock (ContextLocker)
-            {
-                return ContextById.ContainsKey(id);
-            }
+            return ContextById.ContainsKey(id);
         }
 
         public static bool ContainsContext(string name)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
-            lock (ContextLocker)
-            {
-                return ContextByName.ContainsKey(name);
-            }
+            return ContextByName.ContainsKey(name);
         }
 
         public static AsContext GetContext(string name)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
-            lock (ContextLocker)
-            {
-                return ContextByName.ContainsKey(name) ? ContextByName[name] : null;
-            }
+            return ContextByName.ContainsKey(name) ? ContextByName[name] : null;
         }
 
         /// <summary>
@@ -230,9 +175,6 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static bool IsAsContext()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return AsContext.Current != null;
         }
 
@@ -241,16 +183,10 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static bool IsAsContext(int id)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
-            if (!ContainsContext(id))
+            if (!ContextById.ContainsKey(id))
                 return false;
 
-            lock (ContextLocker)
-            {
-                return AsContext.Current == ContextById[id];
-            }
+            return AsContext.Current == ContextById[id];
         }
 
         /// <summary>
@@ -258,16 +194,10 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static IAwaiter ToContext(int id)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+            if (!ContextById.ContainsKey(id))
+                throw new ArgumentException($"AsContext id is not exists: {id}");
 
-            lock (ContextLocker)
-            {
-                if (!ContextById.ContainsKey(id))
-                    throw new ArgumentException($"AsContext id is not exists: {id}");
-
-                return ContextById[id].Awaiter;
-            }
+            return ContextById[id].Awaiter;
         }
 
         /// <summary>
@@ -275,16 +205,10 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static Task ToContext(int id, Action action)
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+            if (!ContextById.ContainsKey(id))
+                throw new ArgumentException($"AsContext id is not exists: {id}");
 
-            lock (ContextLocker)
-            {
-                if (!ContextById.ContainsKey(id))
-                    throw new ArgumentException($"AsContext id is not exists: {id}");
-
-                return ContextById[id].PostAsync(action);
-            }
+            return ContextById[id].PostAsync(action);
         }
 
         #endregion
@@ -296,6 +220,8 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static IAwaiter ToMainContext()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
             return ToContext(_mainContextId);
         }
 
@@ -304,6 +230,8 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static Task ToMainContext(Action action)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
             return ToContext(_mainContextId, action);
         }
 
@@ -312,6 +240,8 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static bool IsMainContext()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
             return IsAsContext(_mainContextId);
         }
 
@@ -324,6 +254,8 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static bool IsBackgroundContext()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
             return IsAsContext(_backgroundContextId);
         }
 
@@ -332,6 +264,8 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static IAwaiter ToBackgroundContext()
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
             return ToContext(_backgroundContextId);
         }
 
@@ -340,6 +274,8 @@ namespace HardDev.AsTaskLib
         /// </summary>
         public static Task ToBackgroundContext(Action action)
         {
+            if (!_initialized)
+                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
             return ToContext(_backgroundContextId, action);
         }
 
@@ -354,7 +290,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return _normalThreadPool.Awaiter;
         }
 
@@ -365,7 +300,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return _normalThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
         }
 
@@ -376,7 +310,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return _blockingThreadPool.Awaiter;
         }
 
@@ -387,7 +320,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return _blockingThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
         }
 
@@ -398,7 +330,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return IsNormalThreadPool() || IsBlockingThreadPool();
         }
 
@@ -409,7 +340,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return TaskScheduler.Current == _normalThreadPool;
         }
 
@@ -420,7 +350,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return TaskScheduler.Current == _blockingThreadPool;
         }
 
@@ -428,7 +357,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return _normalThreadPool;
         }
 
@@ -436,7 +364,6 @@ namespace HardDev.AsTaskLib
         {
             if (!_initialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-
             return _blockingThreadPool;
         }
 
