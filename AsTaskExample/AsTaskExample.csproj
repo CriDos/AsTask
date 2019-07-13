@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net46</TargetFramework>
+        <LangVersion>8</LangVersion>
+        <OutputType>Exe</OutputType>
+        <NullableContextOptions>disable</NullableContextOptions>
+        <IsPackable>false</IsPackable>
+        <Authors>CriDos</Authors>
+        <Copyright>Copyright HardDev©  2019</Copyright>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\AsTask\AsTask.csproj" />
+    </ItemGroup>
+
+</Project>
