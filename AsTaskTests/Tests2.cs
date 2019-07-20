@@ -14,6 +14,7 @@ namespace AsTaskTests
         public Tests2()
         {
             AsTask.Initialize();
+
             _contextTests2Id = AsTask.CreateContext("Tests2");
         }
 
@@ -46,11 +47,11 @@ namespace AsTaskTests
                         await AsTask.ToContext(_contextTests2Id);
                         throw new ApplicationException("ToContext");
                     case 3:
-                        await AsTask.ToNormalThreadPool();
-                        throw new ApplicationException("ToNormalThreadPool");
+                        await AsTask.ToStaticThreadPool();
+                        throw new ApplicationException("ToStaticThreadPool");
                     case 4:
-                        await AsTask.ToBlockingThreadPool();
-                        throw new ApplicationException("ToBlockingThreadPool");
+                        await AsTask.ToDynamicThreadPool();
+                        throw new ApplicationException("ToDynamicThreadPool");
                 }
             }
         }
@@ -84,10 +85,10 @@ namespace AsTaskTests
                         await AsTask.ToContext(_contextTests2Id, () => throw new ApplicationException("ToContext"));
                         break;
                     case 3:
-                        await AsTask.ToNormalThreadPool(() => throw new ApplicationException("ToNormalThreadPool"));
+                        await AsTask.ToStaticThreadPool(() => throw new ApplicationException("ToStaticThreadPool"));
                         break;
                     case 4:
-                        await AsTask.ToBlockingThreadPool(() => throw new ApplicationException("ToBlockingThreadPool"));
+                        await AsTask.ToDynamicThreadPool(() => throw new ApplicationException("ToDynamicThreadPool"));
                         break;
                 }
             }
@@ -96,7 +97,7 @@ namespace AsTaskTests
         [Test]
         public void TestExceptions3()
         {
-            AsExceptionHandler.SetExceptionHandler(task => Console.WriteLine($"[UnhandledException] {task.Exception?.GetBaseException().Message}"));
+            TaskExceptionHandler.SetExceptionHandler(task => Console.WriteLine($"[UnhandledException] {task.Exception?.GetBaseException().Message}"));
 
             for (var i = 0; i < 5; i++)
             {
@@ -117,10 +118,10 @@ namespace AsTaskTests
                         AsTask.ToContext(_contextTests2Id, () => throw new ApplicationException("ToContext"));
                         break;
                     case 3:
-                        AsTask.ToNormalThreadPool(() => throw new ApplicationException("ToNormalThreadPool"));
+                        AsTask.ToStaticThreadPool(() => throw new ApplicationException("ToStaticThreadPool"));
                         break;
                     case 4:
-                        AsTask.ToBlockingThreadPool(() => throw new ApplicationException("ToBlockingThreadPool"));
+                        AsTask.ToDynamicThreadPool(() => throw new ApplicationException("ToDynamicThreadPool"));
                         break;
                 }
             }

@@ -3,11 +3,8 @@ using System.Threading.Tasks;
 
 namespace HardDev.AsTaskLib.Context
 {
-    public static class AsExceptionHandler
+    public static class TaskExceptionHandler
     {
-        /// <summary>
-        /// The specified task exception handler
-        /// </summary>
         private static Action<Task> _handler;
 
         public static void SetExceptionHandler(Action<Task> exceptionHandler)

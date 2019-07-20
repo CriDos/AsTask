@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HardDev.AsTaskLib.Awaiter;
@@ -14,38 +15,51 @@ namespace HardDev.AsTaskLib
         public static int MinDegreeOfParallelism => Math.Max(Environment.ProcessorCount - 1, 1);
 
         private const string NOT_INITIALIZE_MSG = "First need to initialize AsTask.";
+        private const string NAME_MAIN_CONTEXT = "MainContext";
 
-        private static int _mainContextId;
-        private static int _backgroundContextId;
+        private static int _mainContextId = -1;
+        private static int _backgroundContextId = -1;
 
-        private static ThreadPoolScheduler _normalThreadPool;
-        private static ThreadPoolScheduler _blockingThreadPool;
+        private static AbstractTaskScheduler _staticThreadPool;
+        private static AbstractTaskScheduler _dynamicThreadPool;
 
-        private static readonly Dictionary<int, AsContext> ContextById = new Dictionary<int, AsContext>();
-        private static readonly Dictionary<string, AsContext> ContextByName = new Dictionary<string, AsContext>();
+        private static readonly Dictionary<int, ThreadContext> ContextById = new Dictionary<int, ThreadContext>();
+        private static readonly Dictionary<string, ThreadContext> ContextByName = new Dictionary<string, ThreadContext>();
 
-        private static volatile bool _initialized;
         private static bool? _isSupportMultithreading;
+        private static bool _isInitialized;
 
-        #region Initialize
 
-        public static IAwaiter Initialize(int maxNormalThreadPool = 0, int maxBlockingThreadPool = 64, SynchronizationContext mc = null)
+        #region Init
+
+        public static void Initialize(SynchronizationContext mainContext = null, ThreadPriority backgroundPriority = ThreadPriority.Normal,
+            int maxStaticPool = 0, ThreadPriority staticPriority = ThreadPriority.Normal,
+            int maxDynamicPool = 64, ThreadPriority dynamicPriority = ThreadPriority.Normal
+        )
         {
-            if (!_initialized)
+            if (!_isInitialized)
             {
-                if (!CheckSupportMultithreading())
-                    throw new PlatformNotSupportedException("Target platform not supported multithreading.");
+                if (mainContext != null)
+                    CreateMainContext(mainContext);
+                else
+                {
+                    mainContext = SynchronizationContext.Current;
+                    if (mainContext != null)
+                        SetMainContext();
+                    else
+                        CreateMainContext();
+                }
 
-                _mainContextId = CreateContext("MainContext", mc ?? SynchronizationContext.Current);
-                _backgroundContextId = CreateContext("BackgroundContext");
+                _backgroundContextId = CreateContext("BackgroundContext", priority: backgroundPriority);
+                _staticThreadPool = new StaticThreadPool("StaticThreadPool",
+                    maxStaticPool <= 0 ? OptimalDegreeOfParallelism : maxStaticPool,
+                    staticPriority);
+                _dynamicThreadPool = new DynamicThreadPool("DynamicThreadPool",
+                    maxDynamicPool <= 0 ? OptimalDegreeOfParallelism : maxDynamicPool,
+                    dynamicPriority);
 
-                _normalThreadPool = new ThreadPoolScheduler(maxNormalThreadPool <= 0 ? OptimalDegreeOfParallelism : maxNormalThreadPool);
-                _blockingThreadPool = new ThreadPoolScheduler(maxBlockingThreadPool);
-
-                _initialized = true;
+                _isInitialized = true;
             }
-
-            return ToContext(_mainContextId);
         }
 
         #endregion
@@ -54,38 +68,37 @@ namespace HardDev.AsTaskLib
 
         public static string WhereAmI()
         {
-            var contextName = GetCurrentContextName();
             switch (GetCurrentContextType())
             {
-                case AsContextType.AsyncContext:
-                    return $"AsContext(id={GetCurrentContextId()}; name={contextName})";
-                case AsContextType.NormalThreadPool:
-                    return "NormalThreadPool";
-                case AsContextType.BlockingThreadPool:
-                    return "BlockingThreadPool";
-                case AsContextType.UndefinedThreadPool:
+                case ThreadContextType.ThreadContext:
+                    return $"ThreadContext(id={GetCurrentContextId()}; name={GetCurrentContextName()})";
+                case ThreadContextType.StaticThreadPool:
+                    return "StaticThreadPool";
+                case ThreadContextType.DynamicThreadPool:
+                    return "DynamicThreadPool";
+                case ThreadContextType.UndefinedThreadPool:
                     return "UndefinedThreadPool";
-                case AsContextType.UndefinedContext:
+                case ThreadContextType.UndefinedContext:
                     return "UndefinedContext";
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
 
-        public static AsContextType GetCurrentContextType()
+        public static ThreadContextType GetCurrentContextType()
         {
             if (IsThreadPool())
             {
-                if (IsNormalThreadPool())
-                    return AsContextType.NormalThreadPool;
+                if (IsStaticThreadPool())
+                    return ThreadContextType.StaticThreadPool;
 
-                if (IsBlockingThreadPool())
-                    return AsContextType.BlockingThreadPool;
+                if (IsDynamicThreadPool())
+                    return ThreadContextType.DynamicThreadPool;
 
-                return AsContextType.UndefinedThreadPool;
+                return ThreadContextType.UndefinedThreadPool;
             }
 
-            return IsAsContext() ? AsContextType.AsyncContext : AsContextType.UndefinedContext;
+            return IsThreadContext() ? ThreadContextType.ThreadContext : ThreadContextType.UndefinedContext;
         }
 
         public static bool CheckSupportMultithreading()
@@ -107,52 +120,70 @@ namespace HardDev.AsTaskLib
 
         #endregion
 
-        #region AsContext
+        #region ThreadContext
 
-        public static int CreateContext(string name, SynchronizationContext context = null)
+        public static int AddContext(string name, ThreadContext context)
         {
             if (ContextByName.ContainsKey(name))
-                throw new ArgumentException($"AsContext name is already exists: {name}");
+                throw new ArgumentException($"ThreadContext name is already exists: {name}");
 
-            var asContext = new AsContext(name, context);
-            ContextById.Add(asContext.Id, asContext);
-            ContextByName.Add(name, asContext);
+            ContextById.Add(context.Id, context);
+            ContextByName.Add(name, context);
 
-            return asContext.Id;
+            return context.Id;
+        }
+
+        public static int CreateContext(string name, ThreadPriority priority = ThreadPriority.Normal, SynchronizationContext context = null)
+        {
+            if (ContextByName.ContainsKey(name))
+                throw new ArgumentException($"ThreadContext name is already exists: {name}");
+
+            var threadContext = new ThreadContext(name, priority, context);
+            ContextById.Add(threadContext.Id, threadContext);
+            ContextByName.Add(name, threadContext);
+
+            return threadContext.Id;
         }
 
         public static void RemoveContext(int id)
         {
             if (!ContextById.TryGetValue(id, out var context))
-                throw new ArgumentException($"AsContext id is not exists: {id}");
+                throw new ArgumentException($"ThreadContext id is not exists: {id}");
 
             ContextById.Remove(id);
             ContextByName.Remove(context.Name);
 
-            context.AllowToExit();
             context.Dispose();
         }
 
         public static void RemoveContext(string name)
         {
             if (!ContextByName.TryGetValue(name, out var context))
-                throw new ArgumentException($"AsContext name is not exists: {name}");
+                throw new ArgumentException($"ThreadContext name is not exists: {name}");
 
             ContextByName.Remove(name);
             ContextById.Remove(context.Id);
 
-            context.AllowToExit();
             context.Dispose();
+        }
+
+        public static ThreadContext CurrentThreadContext => ContextById.ContainsKey(Thread.CurrentThread.ManagedThreadId)
+            ? ContextById[Thread.CurrentThread.ManagedThreadId]
+            : null;
+
+        public static ThreadContext[] GetContextList()
+        {
+            return ContextById.Values.ToArray();
         }
 
         public static int? GetCurrentContextId()
         {
-            return AsContext.Current?.Id;
+            return CurrentThreadContext?.Id;
         }
 
         public static string GetCurrentContextName()
         {
-            return AsContext.Current?.Name;
+            return CurrentThreadContext?.Name;
         }
 
         public static bool ContainsContext(int id)
@@ -165,117 +196,111 @@ namespace HardDev.AsTaskLib
             return ContextByName.ContainsKey(name);
         }
 
-        public static AsContext GetContext(string name)
+        public static ThreadContext GetContext(string name)
         {
             return ContextByName.ContainsKey(name) ? ContextByName[name] : null;
         }
 
-        /// <summary>
-        /// Returns true if called from the custom context, and false otherwise.
-        /// </summary>
-        public static bool IsAsContext()
+        public static bool IsThreadContext()
         {
-            return AsContext.Current != null;
+            return ContextById.ContainsKey(Thread.CurrentThread.ManagedThreadId);
         }
 
-        /// <summary>
-        /// Returns true if called from the custom context, and false otherwise.
-        /// </summary>
-        public static bool IsAsContext(int id)
+        public static bool IsThreadContext(int id)
         {
-            if (!ContextById.ContainsKey(id))
-                return false;
-
-            return AsContext.Current == ContextById[id];
+            return ContextById.ContainsKey(id);
         }
 
-        /// <summary>
-        /// Switches execution to the custom context
-        /// </summary>
         public static IAwaiter ToContext(int id)
         {
             if (!ContextById.ContainsKey(id))
-                throw new ArgumentException($"AsContext id is not exists: {id}");
+                throw new ArgumentException($"ThreadContext id is not exists: {id}");
 
             return ContextById[id].Awaiter;
         }
 
-        /// <summary>
-        /// Post action to the custom context
-        /// </summary>
         public static Task ToContext(int id, Action action)
         {
             if (!ContextById.ContainsKey(id))
-                throw new ArgumentException($"AsContext id is not exists: {id}");
+                throw new ArgumentException($"ThreadContext id is not exists: {id}");
 
-            return ContextById[id].PostAsync(action);
+            return ContextById[id].Post(action);
         }
 
         #endregion
 
         #region MainContext
 
-        /// <summary>
-        /// Switches execution to the main context.
-        /// </summary>
+        public static void RunMainContext(Action action)
+        {
+            if (_mainContextId != -1)
+                return;
+
+            using var threadContext = new ThreadContext(NAME_MAIN_CONTEXT, action);
+            _mainContextId = AddContext(NAME_MAIN_CONTEXT, threadContext);
+            threadContext.Execute();
+        }
+
+        public static void SetMainContext()
+        {
+            if (_mainContextId != -1)
+                return;
+
+            using var threadContext = new ThreadContext(NAME_MAIN_CONTEXT, SynchronizationContext.Current);
+            _mainContextId = AddContext(NAME_MAIN_CONTEXT, threadContext);
+        }
+
+        public static void CreateMainContext(SynchronizationContext context = null)
+        {
+            if (_mainContextId != -1)
+                return;
+
+            _mainContextId = CreateContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, context);
+        }
+
         public static IAwaiter ToMainContext()
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return ToContext(_mainContextId);
         }
 
-        /// <summary>
-        /// Post action to the main context.
-        /// </summary>
         public static Task ToMainContext(Action action)
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return ToContext(_mainContextId, action);
         }
 
-        /// <summary>
-        /// Returns true if called from the main context, and false otherwise.
-        /// </summary>
         public static bool IsMainContext()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return IsAsContext(_mainContextId);
+            return IsThreadContext(_mainContextId);
         }
 
         #endregion
 
         #region BackgroundContext
 
-        /// <summary>
-        /// Returns true if called from the background context, and false otherwise.
-        /// </summary>
         public static bool IsBackgroundContext()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return IsAsContext(_backgroundContextId);
+            return IsThreadContext(_backgroundContextId);
         }
 
-        /// <summary>
-        /// Switches execution to the background context
-        /// </summary>
         public static IAwaiter ToBackgroundContext()
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return ToContext(_backgroundContextId);
         }
 
-        /// <summary>
-        /// Post action to the background context
-        /// </summary>
         public static Task ToBackgroundContext(Action action)
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
+
             return ToContext(_backgroundContextId, action);
         }
 
@@ -283,88 +308,61 @@ namespace HardDev.AsTaskLib
 
         #region ThreadPool
 
-        /// <summary>
-        /// Switches execution to a normal thread pool.
-        /// </summary>
-        public static IAwaiter ToNormalThreadPool()
+        public static IAwaiter ToStaticThreadPool()
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return _normalThreadPool.Awaiter;
+
+            return _staticThreadPool.Awaiter;
         }
 
-        /// <summary>
-        /// Start action to a normal thread pool.
-        /// </summary>
-        public static Task ToNormalThreadPool(Action action)
+        public static Task ToStaticThreadPool(Action action)
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return _normalThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
+
+            return _staticThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
         }
 
-        /// <summary>
-        /// Switches execution to a blocking operations thread pool.
-        /// </summary>
-        public static IAwaiter ToBlockingThreadPool()
+        public static IAwaiter ToDynamicThreadPool()
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return _blockingThreadPool.Awaiter;
+
+            return _dynamicThreadPool.Awaiter;
         }
 
-        /// <summary>
-        /// Start action to a blocking operations thread pool.
-        /// </summary>
-        public static Task ToBlockingThreadPool(Action action)
+        public static Task ToDynamicThreadPool(Action action)
         {
-            if (!_initialized)
+            if (!_isInitialized)
                 throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return _blockingThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
+
+            return _dynamicThreadPool.TaskFactory.StartNew(action).ExceptionHandler();
         }
 
-        /// <summary>
-        /// Returns true if called from the thread pool, and false otherwise.
-        /// </summary>
+        public static AbstractTaskScheduler GetStaticTaskScheduler()
+        {
+            return _staticThreadPool;
+        }
+
+        public static AbstractTaskScheduler GetDynamicTaskScheduler()
+        {
+            return _dynamicThreadPool;
+        }
+
         public static bool IsThreadPool()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return IsNormalThreadPool() || IsBlockingThreadPool();
+            return TaskScheduler.Current is AbstractTaskScheduler;
         }
 
-        /// <summary>
-        /// Returns true if called from the normal thread pool scheduler, and false otherwise.
-        /// </summary>
-        public static bool IsNormalThreadPool()
+        public static bool IsStaticThreadPool()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return TaskScheduler.Current == _normalThreadPool;
+            return TaskScheduler.Current == _staticThreadPool;
         }
 
-        /// <summary>
-        /// Returns true if called from the blocking thread pool scheduler, and false otherwise.
-        /// </summary>
-        public static bool IsBlockingThreadPool()
+        public static bool IsDynamicThreadPool()
         {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return TaskScheduler.Current == _blockingThreadPool;
-        }
-
-        public static ThreadPoolScheduler GetNormalTaskScheduler()
-        {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return _normalThreadPool;
-        }
-
-        public static ThreadPoolScheduler GetBlockingTaskScheduler()
-        {
-            if (!_initialized)
-                throw new InvalidOperationException(NOT_INITIALIZE_MSG);
-            return _blockingThreadPool;
+            return TaskScheduler.Current == _dynamicThreadPool;
         }
 
         #endregion

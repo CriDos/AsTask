@@ -18,26 +18,24 @@ namespace AsTaskTests
         public Tests1()
         {
             AsTask.Initialize();
+   
             _contextTests1Id = AsTask.CreateContext("Tests1");
         }
 
         [Test]
         public async Task TestSwitchingToContexts()
         {
-            await AsTask.ToMainContext();
-            Assert.True(AsTask.GetCurrentContextType() == AsContextType.AsyncContext);
-
             await AsTask.ToBackgroundContext();
-            Assert.True(AsTask.GetCurrentContextType() == AsContextType.AsyncContext);
+            Assert.True(AsTask.GetCurrentContextType() == ThreadContextType.ThreadContext);
 
             await AsTask.ToContext(_contextTests1Id);
-            Assert.True(AsTask.GetCurrentContextType() == AsContextType.AsyncContext);
+            Assert.True(AsTask.GetCurrentContextType() == ThreadContextType.ThreadContext);
 
-            await AsTask.ToNormalThreadPool();
-            Assert.True(AsTask.GetCurrentContextType() == AsContextType.NormalThreadPool);
+            await AsTask.ToStaticThreadPool();
+            Assert.True(AsTask.GetCurrentContextType() == ThreadContextType.StaticThreadPool);
 
-            await AsTask.ToBlockingThreadPool();
-            Assert.True(AsTask.GetCurrentContextType() == AsContextType.BlockingThreadPool);
+            await AsTask.ToDynamicThreadPool();
+            Assert.True(AsTask.GetCurrentContextType() == ThreadContextType.DynamicThreadPool);
         }
 
         [Test]
@@ -62,36 +60,36 @@ namespace AsTaskTests
             await AsTask.ToContext(_contextTests1Id);
 
             Console.WriteLine(AsTask.WhereAmI());
-            Assert.True(AsTask.IsAsContext(_contextTests1Id), $"This is not the AsContext({_contextTests1Id})!");
+            Assert.True(AsTask.IsThreadContext(_contextTests1Id), $"This is not the AsContext({_contextTests1Id})!");
         }
 
         [Test]
-        public async Task TestToNormalThreadPool()
+        public async Task TestToStaticThreadPool()
         {
-            await AsTask.ToNormalThreadPool();
+            await AsTask.ToStaticThreadPool();
 
             Console.WriteLine(AsTask.WhereAmI());
-            Assert.True(AsTask.IsNormalThreadPool(), "This is not the NormalThreadPool!");
+            Assert.True(AsTask.IsStaticThreadPool(), "This is not the StaticThreadPool!");
         }
 
         [Test]
-        public async Task TestToBlockingThreadPool1()
+        public async Task TestToDynamicThreadPool1()
         {
-            await AsTask.ToBlockingThreadPool();
+            await AsTask.ToDynamicThreadPool();
 
             Console.WriteLine(AsTask.WhereAmI());
-            Assert.True(AsTask.IsBlockingThreadPool(), "This is not the BlockingThreadPool!");
+            Assert.True(AsTask.IsDynamicThreadPool(), "This is not the DynamicThreadPool!");
         }
 
         [Test]
-        public async Task TestToBlockingThreadPool2()
+        public async Task TestToDynamicThreadPool2()
         {
             await AsTask.ToMainContext();
 
             var stopwatch = Stopwatch.StartNew();
             var list = new List<Task>();
             for (var i = 0; i < 64; i++)
-                list.Add(AsTask.ToBlockingThreadPool(() => Thread.Sleep(100)));
+                list.Add(AsTask.ToDynamicThreadPool(() => Thread.Sleep(100)));
             await Task.WhenAll(list);
             stopwatch.Stop();
 
@@ -101,7 +99,7 @@ namespace AsTaskTests
             stopwatch = Stopwatch.StartNew();
             list = new List<Task>();
             for (var i = 0; i < 100; i++)
-                list.Add(AsTask.ToBlockingThreadPool(() => Thread.Sleep(100)));
+                list.Add(AsTask.ToDynamicThreadPool(() => Thread.Sleep(100)));
             await Task.WhenAll(list);
             stopwatch.Stop();
 
@@ -110,41 +108,41 @@ namespace AsTaskTests
         }
 
         [Test]
-        public async Task TestBlockingThreadPoolCountTasksInQueue()
+        public async Task TestDynamicThreadPoolCountTasksInQueue()
         {
-            var taskScheduler = AsTask.GetBlockingTaskScheduler();
+            var taskScheduler = AsTask.GetDynamicTaskScheduler();
             var stopwatch = Stopwatch.StartNew();
 
             for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
             {
-                _ = AsTask.ToBlockingThreadPool(() => { Thread.Sleep(100); });
+                _ = AsTask.ToDynamicThreadPool(() => { Thread.Sleep(100); });
             }
 
             Assert.True(taskScheduler.CountTasksInQueue == taskScheduler.MaximumConcurrencyLevel);
 
-            await AsTask.ToBlockingThreadPool();
+            await AsTask.ToDynamicThreadPool();
             stopwatch.Stop();
 
             var ms = stopwatch.ElapsedMilliseconds;
             Console.WriteLine(ms.ToString());
-            Assert.True(ms > 200 && ms < 250);
+            Assert.True(ms > 200 && ms < 300);
         }
 
         [Test]
-        public async Task TestNormalThreadPoolCountTasksInQueue()
+        public async Task TestStaticThreadPoolCountTasksInQueue()
         {
-            var taskScheduler = AsTask.GetNormalTaskScheduler();
+            var taskScheduler = AsTask.GetStaticTaskScheduler();
             var stopwatch = Stopwatch.StartNew();
 
             for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
             {
-                _ = AsTask.ToNormalThreadPool(() => { Thread.Sleep(200); });
+                _ = AsTask.ToStaticThreadPool(() => { Thread.Sleep(200); });
             }
 
             await 100;
             Assert.True(taskScheduler.CountTasksInQueue == taskScheduler.MaximumConcurrencyLevel);
 
-            await AsTask.ToNormalThreadPool();
+            await AsTask.ToStaticThreadPool();
             stopwatch.Stop();
 
             var ms = stopwatch.ElapsedMilliseconds;
@@ -153,24 +151,24 @@ namespace AsTaskTests
         }
 
         [Test]
-        public async Task TestNormalThreadPoolCountRunningTasks()
+        public async Task TestStaticThreadPoolCountRunningTasks()
         {
-            var taskScheduler = AsTask.GetNormalTaskScheduler();
+            var taskScheduler = AsTask.GetStaticTaskScheduler();
             var stopwatch = Stopwatch.StartNew();
 
             for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
             {
-                _ = AsTask.ToNormalThreadPool(() => { Thread.Sleep(100); });
+                _ = AsTask.ToStaticThreadPool(() => { Thread.Sleep(100); });
             }
 
             await 100;
-            
-            Assert.True(taskScheduler.CountRunningTasks == taskScheduler.MaximumConcurrencyLevel);
 
-            await AsTask.ToNormalThreadPool();
+            Assert.True(taskScheduler.CountExecutableTasks == taskScheduler.MaximumConcurrencyLevel);
 
-            Console.WriteLine(taskScheduler.CountRunningTasks);
-            Assert.True(taskScheduler.CountRunningTasks == 1);
+            await AsTask.ToStaticThreadPool();
+
+            Console.WriteLine(taskScheduler.CountExecutableTasks);
+            Assert.True(taskScheduler.CountExecutableTasks == 1);
 
             stopwatch.Stop();
 
@@ -204,25 +202,25 @@ namespace AsTaskTests
         }
 
         [Test]
-        public async Task TestDelayAwaiterNormalThreadPool()
+        public async Task TestDelayAwaiterStaticThreadPool()
         {
-            await AsTask.ToNormalThreadPool();
+            await AsTask.ToStaticThreadPool();
             var stopwatch = Stopwatch.StartNew();
             await 100;
             stopwatch.Stop();
-            Assert.True(AsTask.IsNormalThreadPool(), $"This is not the NormalThreadPool: {AsTask.WhereAmI()}");
+            Assert.True(AsTask.IsStaticThreadPool(), $"This is not the StaticThreadPool: {AsTask.WhereAmI()}");
             Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms == {AsTask.GetCurrentContextType()} awaiter 100ms");
             Assert.True(stopwatch.ElapsedMilliseconds >= 80 && stopwatch.ElapsedMilliseconds <= 150);
         }
 
         [Test]
-        public async Task TestDelayAwaiterBlockingThreadPool()
+        public async Task TestDelayAwaiterDynamicThreadPool()
         {
-            await AsTask.ToBlockingThreadPool();
+            await AsTask.ToDynamicThreadPool();
             var stopwatch = Stopwatch.StartNew();
             await 100;
             stopwatch.Stop();
-            Assert.True(AsTask.IsBlockingThreadPool(), $"This is not the BlockingThreadPool: {AsTask.WhereAmI()}");
+            Assert.True(AsTask.IsDynamicThreadPool(), $"This is not the DynamicThreadPool: {AsTask.WhereAmI()}");
             Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms == {AsTask.GetCurrentContextType()} awaiter 100ms");
             Assert.True(stopwatch.ElapsedMilliseconds >= 80 && stopwatch.ElapsedMilliseconds <= 150);
         }
@@ -250,19 +248,19 @@ namespace AsTaskTests
             for (var i = 0; i < 1000; i++)
             {
                 await AsTask.ToContext(_contextTests1Id);
-                Assert.True(AsTask.IsAsContext(_contextTests1Id));
+                Assert.True(AsTask.IsThreadContext(_contextTests1Id));
             }
 
             for (var i = 0; i < 1000; i++)
             {
-                await AsTask.ToNormalThreadPool();
-                Assert.True(AsTask.IsNormalThreadPool());
+                await AsTask.ToStaticThreadPool();
+                Assert.True(AsTask.IsStaticThreadPool());
             }
 
             for (var i = 0; i < 1000; i++)
             {
-                await AsTask.ToBlockingThreadPool();
-                Assert.True(AsTask.IsBlockingThreadPool());
+                await AsTask.ToDynamicThreadPool();
+                Assert.True(AsTask.IsDynamicThreadPool());
             }
         }
 
@@ -291,14 +289,15 @@ namespace AsTaskTests
         {
             var threadsCount = Process.GetCurrentProcess().Threads.Count;
 
+            var arr = new int[100];
             for (var i = 0; i < 100; i++)
-                _ = AsTask.CreateContext(i.ToString());
+                arr[i] = AsTask.CreateContext(i.ToString());
 
             await 100;
             Assert.True(threadsCount + 100 == Process.GetCurrentProcess().Threads.Count);
 
             for (var i = 0; i < 100; i++)
-                AsTask.RemoveContext(i.ToString());
+                AsTask.RemoveContext(arr[i]);
 
             await 100;
             Assert.True(threadsCount == Process.GetCurrentProcess().Threads.Count);

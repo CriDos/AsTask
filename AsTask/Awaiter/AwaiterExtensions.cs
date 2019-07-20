@@ -13,7 +13,7 @@ namespace HardDev.AsTaskLib.Awaiter
             return new DelayAwaiter(milliseconds);
         }
 
-        public static IAwaiter GetAwaiter(this AsContext context)
+        public static IAwaiter GetAwaiter(this ThreadContext context)
         {
             return context.Awaiter;
         }

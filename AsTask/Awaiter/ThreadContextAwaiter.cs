@@ -6,21 +6,21 @@ using HardDev.AsTaskLib.Context;
 namespace HardDev.AsTaskLib.Awaiter
 {
     [StructLayout(LayoutKind.Auto)]
-    public struct AsContextAwaiter : IAwaiter
+    public struct ThreadContextAwaiter : IAwaiter
     {
         public IAwaiter GetAwaiter() => this;
-        public bool IsCompleted => _context.SynContext == SynchronizationContext.Current;
+        public bool IsCompleted => _context.Context == SynchronizationContext.Current;
 
-        private readonly AsContext _context;
+        private readonly ThreadContext _context;
 
-        public AsContextAwaiter(AsContext context)
+        public ThreadContextAwaiter(ThreadContext context)
         {
             _context = context;
         }
 
         public void OnCompleted(Action action)
         {
-            _context.PostAsync(action);
+            _context.Post(action);
         }
 
         public void GetResult()

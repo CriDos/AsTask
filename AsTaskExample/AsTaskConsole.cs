@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using HardDev.AsTaskLib;
 using HardDev.AsTaskLib.Awaiter;
@@ -11,18 +12,22 @@ namespace AsTaskExample
     {
         private static bool _isShutdown;
 
-        public static async Task Main()
-        {
-            WriteLine("Initialize AsTask and capture the context of the main context.");
-            await AsTask.Initialize();
+        public static void Main() => AsTask.RunMainContext(MainAsync);
 
+        private static async void MainAsync()
+        {
             WriteLine("Assign an exception handler.");
-            AsExceptionHandler.SetExceptionHandler(task =>
+            TaskExceptionHandler.SetExceptionHandler(task =>
             {
                 Error.WriteLine(task.Exception != null
                     ? $"[ExceptionHandler] {task.Exception.GetBaseException().Message}"
                     : $"[ExceptionHandler] Unhandled exception in task {task}");
             });
+
+            WriteLine("Initialize AsTask and capture the context of the main context.");
+            AsTask.Initialize();
+
+            await AsTask.ToMainContext();
 
             WriteLine($"Print to the console information about the current context: {AsTask.WhereAmI()}");
 
@@ -58,10 +63,10 @@ namespace AsTaskExample
                 WriteLine("hmm, we're still in the main context!:)");
 
             WriteLine("The life cycle of a console application runs on the main context.");
-            var scheduler = AsTask.GetNormalTaskScheduler();
+            var scheduler = AsTask.GetStaticTaskScheduler();
             while (!_isShutdown)
             {
-                WriteLine($"Count running tasks: {scheduler.CountRunningTasks}; Count tasks in queue: {scheduler.CountTasksInQueue}");
+                WriteLine($"Count running tasks: {scheduler.CountExecutableTasks}; Count tasks in queue: {scheduler.CountTasksInQueue}");
                 await 1000; // Each iteration waits asynchronously for 1000 ms
             }
 
@@ -71,6 +76,8 @@ namespace AsTaskExample
                 WriteLine($"Shutdown through {i}s");
                 await 1000;
             }
+
+            Environment.Exit(0);
         }
 
         public static void Shutdown() => _isShutdown = true;
@@ -78,7 +85,7 @@ namespace AsTaskExample
         private static async Task<long> FindPrimeNumberAsync(int n)
         {
             // Here we switch to a normal thread pool to do the heavy work...
-            await AsTask.ToNormalThreadPool();
+            await AsTask.ToStaticThreadPool();
 
             var count = 0;
             long a = 2;
