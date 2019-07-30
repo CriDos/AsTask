@@ -29,9 +29,6 @@ namespace HardDev.AsTaskLib
         private static bool? _isSupportMultithreading;
         private static bool _isInitialized;
 
-
-        #region Init
-
         public static void Initialize(SynchronizationContext mainContext = null, ThreadPriority backgroundPriority = ThreadPriority.Normal,
             int maxStaticPool = 0, ThreadPriority staticPriority = ThreadPriority.Normal,
             int maxDynamicPool = 64, ThreadPriority dynamicPriority = ThreadPriority.Normal
@@ -61,8 +58,6 @@ namespace HardDev.AsTaskLib
                 _isInitialized = true;
             }
         }
-
-        #endregion
 
         #region Information
 
