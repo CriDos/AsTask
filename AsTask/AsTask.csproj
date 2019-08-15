@@ -13,7 +13,7 @@
         <LangVersion>8.0</LangVersion>
         <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <TargetFrameworks>net46;net472;netstandard2.0;netcoreapp2.0;netcoreapp2.2</TargetFrameworks>
+        <TargetFrameworks>net46;netstandard2.0;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <RepositoryUrl>https://github.com/CriDos/AsTask</RepositoryUrl>
