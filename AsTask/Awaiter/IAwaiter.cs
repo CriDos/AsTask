@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace HardDev.AsTaskLib.Awaiter
+namespace HardDev.Awaiter
 {
     /// <inheritdoc />
     /// <summary>

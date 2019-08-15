@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace HardDev.AsTaskLib.Scheduler
+namespace HardDev.Scheduler
 {
     internal sealed class StaticThreadPool : AbstractTaskScheduler
     {

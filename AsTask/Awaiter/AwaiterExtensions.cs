@@ -1,6 +1,6 @@
-using HardDev.AsTaskLib.Context;
+using HardDev.Context;
 
-namespace HardDev.AsTaskLib.Awaiter
+namespace HardDev.Awaiter
 {
     public static class AwaiterExtensions
     {

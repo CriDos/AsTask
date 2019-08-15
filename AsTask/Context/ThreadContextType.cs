@@ -1,4 +1,4 @@
-namespace HardDev.AsTaskLib.Context
+namespace HardDev.Context
 {
     public enum ThreadContextType
     {

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using HardDev.AsTaskLib;
-using HardDev.AsTaskLib.Context;
+using HardDev;
+using HardDev.Context;
 using NUnit.Framework;
 
 namespace AsTaskTests

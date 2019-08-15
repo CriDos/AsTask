@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace HardDev.AsTaskLib.Context
+namespace HardDev.Context
 {
     public static class TaskExceptionHandler
     {
