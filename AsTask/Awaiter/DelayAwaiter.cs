@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace HardDev.AsTaskLib.Awaiter
+namespace HardDev.Awaiter
 {
     /// <summary>
     /// Awaiter waiting time in milliseconds.

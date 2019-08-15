@@ -3,9 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using HardDev.AsTaskLib.Awaiter;
+using HardDev.Awaiter;
 
-namespace HardDev.AsTaskLib.Scheduler
+namespace HardDev.Scheduler
 {
     /// <summary>
     /// Provides a TaskScheduler that provides control over the underlying threads utilized.

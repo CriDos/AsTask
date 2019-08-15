@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using HardDev.AsTaskLib;
-using HardDev.AsTaskLib.Awaiter;
-using HardDev.AsTaskLib.Context;
+using HardDev;
+using HardDev.Awaiter;
+using HardDev.Context;
 using NUnit.Framework;
 
 namespace AsTaskTests

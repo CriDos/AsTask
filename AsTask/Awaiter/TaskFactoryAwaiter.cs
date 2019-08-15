@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace HardDev.AsTaskLib.Awaiter
+namespace HardDev.Awaiter
 {
     [StructLayout(LayoutKind.Auto)]
     public struct TaskFactoryAwaiter : IAwaiter

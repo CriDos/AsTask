@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <RootNamespace>HardDev.AsTaskLib</RootNamespace>
+        <RootNamespace>HardDev</RootNamespace>
         <Authors>CriDos</Authors>
         <Company>HardDev</Company>
         <Description>Async Task Library</Description>
-        <AssemblyVersion>2.1.0</AssemblyVersion>
-        <FileVersion>2.1.0</FileVersion>
-        <Version>2.1.0</Version>
-        <PackageVersion>2.1.0</PackageVersion>
+        <AssemblyVersion>2.2.0</AssemblyVersion>
+        <FileVersion>2.2.0</FileVersion>
+        <Version>2.2.0</Version>
+        <PackageVersion>2.2.0</PackageVersion>
         <Copyright>Copyright HardDev© 2019</Copyright>
         <LangVersion>8.0</LangVersion>
         <Configurations>Debug;Release</Configurations>

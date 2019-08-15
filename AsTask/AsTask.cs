@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using HardDev.AsTaskLib.Awaiter;
-using HardDev.AsTaskLib.Context;
-using HardDev.AsTaskLib.Scheduler;
+using HardDev.Awaiter;
+using HardDev.Context;
+using HardDev.Scheduler;
 
-namespace HardDev.AsTaskLib
+namespace HardDev
 {
     public static class AsTask
     {
@@ -28,9 +28,6 @@ namespace HardDev.AsTaskLib
 
         private static bool? _isSupportMultithreading;
         private static bool _isInitialized;
-
-
-        #region Init
 
         public static void Initialize(SynchronizationContext mainContext = null, ThreadPriority backgroundPriority = ThreadPriority.Normal,
             int maxStaticPool = 0, ThreadPriority staticPriority = ThreadPriority.Normal,
@@ -55,14 +52,12 @@ namespace HardDev.AsTaskLib
                     maxStaticPool <= 0 ? OptimalDegreeOfParallelism : maxStaticPool,
                     staticPriority);
                 _dynamicThreadPool = new DynamicThreadPool("DynamicThreadPool",
-                    maxDynamicPool <= 0 ? OptimalDegreeOfParallelism : maxDynamicPool,
+                    maxDynamicPool <= 0 ? 64 : maxDynamicPool,
                     dynamicPriority);
 
                 _isInitialized = true;
             }
         }
-
-        #endregion
 
         #region Information
 
@@ -241,7 +236,7 @@ namespace HardDev.AsTaskLib
             threadContext.Execute();
         }
 
-        public static void SetMainContext()
+        private static void SetMainContext()
         {
             if (_mainContextId != -1)
                 return;
@@ -250,7 +245,7 @@ namespace HardDev.AsTaskLib
             _mainContextId = AddContext(NAME_MAIN_CONTEXT, threadContext);
         }
 
-        public static void CreateMainContext(SynchronizationContext context = null)
+        private static void CreateMainContext(SynchronizationContext context = null)
         {
             if (_mainContextId != -1)
                 return;

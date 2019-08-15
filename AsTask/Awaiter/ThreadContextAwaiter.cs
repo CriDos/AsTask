@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
-using HardDev.AsTaskLib.Context;
+using HardDev.Context;
 
-namespace HardDev.AsTaskLib.Awaiter
+namespace HardDev.Awaiter
 {
     [StructLayout(LayoutKind.Auto)]
     public struct ThreadContextAwaiter : IAwaiter

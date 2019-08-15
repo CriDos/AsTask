@@ -2,9 +2,9 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using HardDev.AsTaskLib.Awaiter;
+using HardDev.Awaiter;
 
-namespace HardDev.AsTaskLib.Context
+namespace HardDev.Context
 {
     public sealed class ThreadContext : IDisposable
     {

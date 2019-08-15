@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HardDev.AsTaskLib.Scheduler
+namespace HardDev.Scheduler
 {
     public sealed class DynamicThreadPool : AbstractTaskScheduler
     {

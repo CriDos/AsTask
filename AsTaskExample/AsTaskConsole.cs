@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HardDev.AsTaskLib;
-using HardDev.AsTaskLib.Awaiter;
-using HardDev.AsTaskLib.Context;
+using HardDev;
+using HardDev.Awaiter;
+using HardDev.Context;
 using static System.Console;
 
 namespace AsTaskExample
