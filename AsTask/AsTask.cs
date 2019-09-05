@@ -34,29 +34,29 @@ namespace HardDev
             int maxDynamicPool = 64, ThreadPriority dynamicPriority = ThreadPriority.Normal
         )
         {
-            if (!_isInitialized)
+            if (_isInitialized)
+                return;
+
+            if (mainContext != null)
+                _mainContextId = CreateContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, mainContext);
+            else
             {
-                if (mainContext != null)
-                    CreateMainContext(mainContext);
+                mainContext = SynchronizationContext.Current;
+                if (mainContext == null)
+                    _mainContextId = CreateContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, mainContext);
                 else
-                {
-                    mainContext = SynchronizationContext.Current;
-                    if (mainContext != null)
-                        SetMainContext();
-                    else
-                        CreateMainContext();
-                }
-
-                _backgroundContextId = CreateContext("BackgroundContext", priority: backgroundPriority);
-                _staticThreadPool = new StaticThreadPool("StaticThreadPool",
-                    maxStaticPool <= 0 ? OptimalDegreeOfParallelism : maxStaticPool,
-                    staticPriority);
-                _dynamicThreadPool = new DynamicThreadPool("DynamicThreadPool",
-                    maxDynamicPool <= 0 ? 64 : maxDynamicPool,
-                    dynamicPriority);
-
-                _isInitialized = true;
+                    _mainContextId = AddContext(NAME_MAIN_CONTEXT, new ThreadContext(NAME_MAIN_CONTEXT, mainContext));
             }
+
+            _backgroundContextId = CreateContext("BackgroundContext", priority: backgroundPriority);
+            _staticThreadPool = new StaticThreadPool("StaticThreadPool",
+                maxStaticPool <= 0 ? OptimalDegreeOfParallelism : maxStaticPool,
+                staticPriority);
+            _dynamicThreadPool = new DynamicThreadPool("DynamicThreadPool",
+                maxDynamicPool <= 0 ? 64 : maxDynamicPool,
+                dynamicPriority);
+
+            _isInitialized = true;
         }
 
         #region Information
@@ -234,23 +234,6 @@ namespace HardDev
             using var threadContext = new ThreadContext(NAME_MAIN_CONTEXT, action);
             _mainContextId = AddContext(NAME_MAIN_CONTEXT, threadContext);
             threadContext.Execute();
-        }
-
-        private static void SetMainContext()
-        {
-            if (_mainContextId != -1)
-                return;
-
-            using var threadContext = new ThreadContext(NAME_MAIN_CONTEXT, SynchronizationContext.Current);
-            _mainContextId = AddContext(NAME_MAIN_CONTEXT, threadContext);
-        }
-
-        private static void CreateMainContext(SynchronizationContext context = null)
-        {
-            if (_mainContextId != -1)
-                return;
-
-            _mainContextId = CreateContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, context);
         }
 
         public static IAwaiter ToMainContext()
