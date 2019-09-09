@@ -147,7 +147,7 @@ namespace AsTaskTests
 
             var ms = stopwatch.ElapsedMilliseconds;
             Console.WriteLine(ms.ToString());
-            Assert.True(ms > 400 && ms < 450);
+            Assert.True(ms >= 400 && ms <= 450);
         }
 
         [Test]
@@ -281,25 +281,6 @@ namespace AsTaskTests
             AsTask.RemoveContext(id);
 
             await 200;
-            Assert.True(threadsCount == Process.GetCurrentProcess().Threads.Count);
-        }
-
-        [Test]
-        public async Task Test100AddAndRemoveAsyncContext()
-        {
-            var threadsCount = Process.GetCurrentProcess().Threads.Count;
-
-            var arr = new int[100];
-            for (var i = 0; i < 100; i++)
-                arr[i] = AsTask.CreateContext(i.ToString());
-
-            await 100;
-            Assert.True(threadsCount + 100 == Process.GetCurrentProcess().Threads.Count);
-
-            for (var i = 0; i < 100; i++)
-                AsTask.RemoveContext(arr[i]);
-
-            await 100;
             Assert.True(threadsCount == Process.GetCurrentProcess().Threads.Count);
         }
 

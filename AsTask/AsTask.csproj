@@ -5,10 +5,10 @@
         <Authors>CriDos</Authors>
         <Company>HardDev</Company>
         <Description>Async Task Library</Description>
-        <AssemblyVersion>2.2.1</AssemblyVersion>
-        <FileVersion>2.2.1</FileVersion>
-        <Version>2.2.1</Version>
-        <PackageVersion>2.2.1</PackageVersion>
+        <AssemblyVersion>2.3.0</AssemblyVersion>
+        <FileVersion>2.3.0</FileVersion>
+        <Version>2.3.0</Version>
+        <PackageVersion>2.3.0</PackageVersion>
         <Copyright>Copyright HardDev© 2019</Copyright>
         <LangVersion>8.0</LangVersion>
         <Configurations>Debug;Release</Configurations>
@@ -20,7 +20,7 @@
         <PackageProjectUrl>https://github.com/CriDos/AsTask</PackageProjectUrl>
         <PackageTags>multithreading, async-await, thread-pool, thread</PackageTags>
         <RepositoryType />
-     
+
         <NullableContextOptions>disable</NullableContextOptions>
     </PropertyGroup>
 

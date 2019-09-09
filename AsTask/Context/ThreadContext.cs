@@ -19,26 +19,15 @@ namespace HardDev.Context
 
         private ThreadContext(string name)
         {
+            _thread = Thread.CurrentThread;
             Name = name;
             Awaiter = new ThreadContextAwaiter(this);
-        }
-
-        public ThreadContext(string name, Action action) : this(name)
-        {
-            Context = new SynContext(this);
-            Context.OperationStarted();
-
-            _thread = Thread.CurrentThread;
-            
-            Post(action);
         }
 
         public ThreadContext(string name, SynchronizationContext context) : this(name)
         {
             Context = context;
             Context.OperationStarted();
-
-            _thread = Thread.CurrentThread;
         }
 
         public ThreadContext(string name, ThreadPriority priority = ThreadPriority.Normal,
@@ -86,7 +75,7 @@ namespace HardDev.Context
             _thread.Join();
         }
 
-        public void Execute()
+        private void Execute()
         {
             SynchronizationContext.SetSynchronizationContext(Context);
             foreach (var action in _queueActions.GetConsumingEnumerable())
