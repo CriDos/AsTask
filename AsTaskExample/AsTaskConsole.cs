@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using HardDev;
 using HardDev.Awaiter;
@@ -12,9 +11,7 @@ namespace AsTaskExample
     {
         private static bool _isShutdown;
 
-        public static void Main() => AsTask.RunMainContext(MainAsync);
-
-        private static async void MainAsync()
+        private static async Task Main()
         {
             WriteLine("Assign an exception handler.");
             TaskExceptionHandler.SetExceptionHandler(task =>
@@ -24,10 +21,9 @@ namespace AsTaskExample
                     : $"[ExceptionHandler] Unhandled exception in task {task}");
             });
 
-            WriteLine("Initialize AsTask and capture the context of the main context.");
-            AsTask.Initialize();
-
-            await AsTask.ToMainContext();
+            
+            WriteLine("We get or create a synchronization context and switch to it.");
+            await AsTask.Initialize();
 
             WriteLine($"Print to the console information about the current context: {AsTask.WhereAmI()}");
 
@@ -76,8 +72,6 @@ namespace AsTaskExample
                 WriteLine($"Shutdown through {i}s");
                 await 1000;
             }
-
-            Environment.Exit(0);
         }
 
         public static void Shutdown() => _isShutdown = true;
