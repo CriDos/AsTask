@@ -40,7 +40,7 @@ namespace HardDev
                 if (mainContext == null)
                     _mainContextId = CreateContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, mainContext);
                 else
-                    _mainContextId = AddContext(NAME_MAIN_CONTEXT, new ThreadContext(NAME_MAIN_CONTEXT, mainContext));
+                    _mainContextId = AddContext(NAME_MAIN_CONTEXT, new ThreadContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, mainContext));
 
                 _backgroundContextId = CreateContext("BackgroundContext", priority: backgroundPriority);
                 _staticThreadPool = new StaticThreadPool("StaticThreadPool",
