@@ -15,7 +15,6 @@ namespace HardDev
         public static int MinDegreeOfParallelism => Math.Max(Environment.ProcessorCount - 1, 1);
 
         private const string NOT_INITIALIZE_MSG = "First need to initialize AsTask.";
-        private const string NAME_MAIN_CONTEXT = "MainContext";
 
         private static int _mainContextId = -1;
         private static int _backgroundContextId = -1;
@@ -36,12 +35,7 @@ namespace HardDev
         {
             if (!_isInitialized)
             {
-                mainContext ??= SynchronizationContext.Current;
-                if (mainContext == null)
-                    _mainContextId = CreateContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, mainContext);
-                else
-                    _mainContextId = AddContext(NAME_MAIN_CONTEXT, new ThreadContext(NAME_MAIN_CONTEXT, ThreadPriority.Highest, mainContext));
-
+                _mainContextId = CreateContext("MainContext", mainContext ?? SynchronizationContext.Current, ThreadPriority.Highest);
                 _backgroundContextId = CreateContext("BackgroundContext", priority: backgroundPriority);
                 _staticThreadPool = new StaticThreadPool("StaticThreadPool",
                     maxStaticPool <= 0 ? OptimalDegreeOfParallelism : maxStaticPool, staticPriority);
@@ -112,23 +106,12 @@ namespace HardDev
 
         #region ThreadContext
 
-        public static int AddContext(string name, ThreadContext context)
+        public static int CreateContext(string name, SynchronizationContext context = null, ThreadPriority priority = ThreadPriority.Normal)
         {
             if (ContextByName.ContainsKey(name))
                 throw new ArgumentException($"ThreadContext name is already exists: {name}");
 
-            ContextById.Add(context.Id, context);
-            ContextByName.Add(name, context);
-
-            return context.Id;
-        }
-
-        public static int CreateContext(string name, ThreadPriority priority = ThreadPriority.Normal, SynchronizationContext context = null)
-        {
-            if (ContextByName.ContainsKey(name))
-                throw new ArgumentException($"ThreadContext name is already exists: {name}");
-
-            var threadContext = new ThreadContext(name, priority, context);
+            var threadContext = new ThreadContext(name, context, priority);
             ContextById.Add(threadContext.Id, threadContext);
             ContextByName.Add(name, threadContext);
 
@@ -157,9 +140,8 @@ namespace HardDev
             context.Dispose();
         }
 
-        public static ThreadContext CurrentThreadContext => ContextById.ContainsKey(Thread.CurrentThread.ManagedThreadId)
-            ? ContextById[Thread.CurrentThread.ManagedThreadId]
-            : null;
+        public static ThreadContext CurrentThreadContext =>
+            ContextById.TryGetValue(Thread.CurrentThread.ManagedThreadId, out var context) ? context : null;
 
         public static ThreadContext[] GetContextList()
         {
@@ -188,12 +170,12 @@ namespace HardDev
 
         public static ThreadContext GetContext(string name)
         {
-            return ContextByName.ContainsKey(name) ? ContextByName[name] : null;
+            return ContextByName.TryGetValue(name, out var context) ? context : null;
         }
 
         public static ThreadContext GetContext(int id)
         {
-            return ContextById.ContainsKey(id) ? ContextById[id] : null;
+            return ContextById.TryGetValue(id, out var context) ? context : null;
         }
 
         public static bool IsThreadContext()

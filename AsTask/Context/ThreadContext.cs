@@ -17,27 +17,23 @@ namespace HardDev.Context
         private readonly BlockingCollection<Action> _queueActions = new BlockingCollection<Action>();
         private int _outstandingOperations;
 
-        private ThreadContext(string name)
+        public ThreadContext(string name, SynchronizationContext context = null, ThreadPriority priority = ThreadPriority.Normal)
         {
-            _thread = Thread.CurrentThread;
             Name = name;
             Awaiter = new ThreadContextAwaiter(this);
-        }
 
-        public ThreadContext(string name, SynchronizationContext context) : this(name)
-        {
-            Context = context;
-            Context.OperationStarted();
-        }
-
-        public ThreadContext(string name, ThreadPriority priority = ThreadPriority.Normal,
-            SynchronizationContext context = null) : this(name)
-        {
-            Context = context ?? new SynContext(this);
-            Context.OperationStarted();
-
-            _thread = new Thread(Execute) {Name = name, Priority = priority, IsBackground = true};
-            _thread.Start();
+            if (context == null)
+            {
+                Context = new SynContext(this);
+                Context.OperationStarted();
+                _thread = new Thread(Execute) {Name = name, Priority = priority, IsBackground = true};
+                _thread.Start();
+            }
+            else
+            {
+                Context = context;
+                _thread = Thread.CurrentThread;
+            }
         }
 
         public Task Post(Action action)
