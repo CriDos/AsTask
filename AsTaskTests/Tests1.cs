@@ -18,7 +18,7 @@ namespace AsTaskTests
         public Tests1()
         {
             AsTask.Initialize();
-   
+
             _contextTests1Id = AsTask.CreateContext("Tests1");
         }
 
@@ -82,55 +82,6 @@ namespace AsTaskTests
         }
 
         [Test]
-        public async Task TestToDynamicThreadPool2()
-        {
-            await AsTask.ToMainContext();
-
-            var stopwatch = Stopwatch.StartNew();
-            var list = new List<Task>();
-            for (var i = 0; i < AsTask.GetDynamicTaskScheduler().MaximumConcurrencyLevel; i++)
-                list.Add(AsTask.ToDynamicThreadPool(() => Thread.Sleep(100)));
-            await Task.WhenAll(list);
-            stopwatch.Stop();
-
-            Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms <  150ms");
-            Assert.True(stopwatch.ElapsedMilliseconds < 150);
-
-            stopwatch = Stopwatch.StartNew();
-            list = new List<Task>();
-            for (var i = 0; i < 100; i++)
-                list.Add(AsTask.ToDynamicThreadPool(() => Thread.Sleep(100)));
-            await Task.WhenAll(list);
-            stopwatch.Stop();
-
-            Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms > 150ms");
-            Assert.True(stopwatch.ElapsedMilliseconds > 150);
-        }
-
-        [Test]
-        public async Task TestStaticThreadPoolCountTasksInQueue()
-        {
-            var taskScheduler = AsTask.GetStaticTaskScheduler();
-            var stopwatch = Stopwatch.StartNew();
-
-            for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
-            {
-                _ = AsTask.ToStaticThreadPool(() => { Thread.Sleep(200); });
-            }
-            
-            Assert.True(taskScheduler.CountTasksInQueue == taskScheduler.MaximumConcurrencyLevel);
-            await 200;
-            Assert.True(taskScheduler.CountTasksInQueue == 0);
-
-            await AsTask.ToStaticThreadPool();
-            stopwatch.Stop();
-
-            var ms = stopwatch.ElapsedMilliseconds;
-            Console.WriteLine(ms.ToString());
-            Assert.True(ms >= 700 && ms <= 800);
-        }
-
-        [Test]
         public async Task TestStaticThreadPoolCountRunningTasks()
         {
             var taskScheduler = AsTask.GetStaticTaskScheduler();
@@ -138,7 +89,7 @@ namespace AsTaskTests
 
             for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
             {
-                _ = AsTask.ToStaticThreadPool(() => { Thread.Sleep(200); });
+                _ = AsTask.ToStaticThreadPool(() => Thread.Sleep(200));
             }
 
             await 100;

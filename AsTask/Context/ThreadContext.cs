@@ -31,7 +31,7 @@ namespace HardDev.Context
             {
                 Context = context;
             }
-            
+
             Id = Context.GetHashCode();
         }
 

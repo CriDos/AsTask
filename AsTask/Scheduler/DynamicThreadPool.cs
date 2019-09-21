@@ -28,7 +28,7 @@ namespace HardDev.Scheduler
                 return;
 
             Interlocked.Increment(ref _countThreads);
-            Task.Factory.StartNew(ThreadBasedDispatchLoop, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
+            Task.Factory.StartNew(ThreadBasedDispatchLoop, TaskCreationOptions.DenyChildAttach);
         }
 
         private void ThreadBasedDispatchLoop()

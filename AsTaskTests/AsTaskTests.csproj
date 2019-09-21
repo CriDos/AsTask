@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{F6568968-A56A-49FE-84B1-207BD099C0BA}</ProjectGuid>
         <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-        <TargetFramework>net46</TargetFramework>
+        <TargetFramework>net462</TargetFramework>
         <LangVersion>8</LangVersion>
         <NullableContextOptions>disable</NullableContextOptions>
         <AssemblyTitle>AsTaskTests</AssemblyTitle>
