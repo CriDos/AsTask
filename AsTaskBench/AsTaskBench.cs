@@ -29,6 +29,13 @@ namespace AsTaskBench
             await 100;
             await Task.Yield();
         }
+        
+        [Benchmark(Description = "ToBackgroundContext3")]
+        public async Task TestBc3()
+        {
+            await AsTask.ToBackgroundContext();
+            await Task.Yield();
+        }
 
         [Benchmark(Description = "ToStaticThreadPool1")]
         public async Task TestStp1()
@@ -44,6 +51,13 @@ namespace AsTaskBench
             await 100;
             await Task.Yield();
         }
+        
+        [Benchmark(Description = "ToStaticThreadPool3")]
+        public async Task TestStp3()
+        {
+            await AsTask.ToStaticThreadPool();
+            await Task.Yield();
+        }
 
         [Benchmark(Description = "ToDynamicThreadPool1")]
         public async Task TestDtp1()
@@ -57,6 +71,13 @@ namespace AsTaskBench
         {
             await AsTask.ToDynamicThreadPool();
             await 100;
+            await Task.Yield();
+        }
+        
+        [Benchmark(Description = "ToDynamicThreadPool3")]
+        public async Task TestDtp3()
+        {
+            await AsTask.ToDynamicThreadPool();
             await Task.Yield();
         }
     }
