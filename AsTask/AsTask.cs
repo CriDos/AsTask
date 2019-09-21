@@ -28,19 +28,14 @@ namespace HardDev
         private static bool? _isSupportMultithreading;
         private static bool _isInitialized;
 
-        public static IAwaiter Initialize(SynchronizationContext mainContext = null, ThreadPriority backgroundPriority = ThreadPriority.Normal,
-            int maxStaticPool = 0, ThreadPriority staticPriority = ThreadPriority.Normal,
-            int maxDynamicPool = 64, ThreadPriority dynamicPriority = ThreadPriority.Normal
-        )
+        public static IAwaiter Initialize(SynchronizationContext mainContext = null, int maxStaticPool = 0, int maxDynamicPool = 64)
         {
             if (!_isInitialized)
             {
-                _mainContextId = CreateContext("MainContext", mainContext ?? SynchronizationContext.Current, ThreadPriority.Highest);
-                _backgroundContextId = CreateContext("BackgroundContext", priority: backgroundPriority);
-                _staticThreadPool = new StaticThreadPool("StaticThreadPool",
-                    maxStaticPool <= 0 ? OptimalDegreeOfParallelism : maxStaticPool, staticPriority);
-                _dynamicThreadPool = new DynamicThreadPool("DynamicThreadPool",
-                    maxDynamicPool <= 0 ? 64 : maxDynamicPool, dynamicPriority);
+                _mainContextId = CreateContext("MainContext", mainContext ?? SynchronizationContext.Current);
+                _backgroundContextId = CreateContext("BackgroundContext");
+                _staticThreadPool = new StaticThreadPool("StaticThreadPool", maxStaticPool <= 0 ? OptimalDegreeOfParallelism : maxStaticPool);
+                _dynamicThreadPool = new DynamicThreadPool("DynamicThreadPool", maxDynamicPool <= 0 ? 64 : maxDynamicPool);
 
                 _isInitialized = true;
             }
@@ -106,12 +101,12 @@ namespace HardDev
 
         #region ThreadContext
 
-        public static int CreateContext(string name, SynchronizationContext context = null, ThreadPriority priority = ThreadPriority.Normal)
+        public static int CreateContext(string name, SynchronizationContext context = null)
         {
             if (ContextByName.ContainsKey(name))
                 throw new ArgumentException($"ThreadContext name is already exists: {name}");
 
-            var threadContext = new ThreadContext(name, context, priority);
+            var threadContext = new ThreadContext(name, context);
             ContextById.Add(threadContext.Id, threadContext);
             ContextByName.Add(name, threadContext);
 
@@ -140,8 +135,14 @@ namespace HardDev
             context.Dispose();
         }
 
-        public static ThreadContext CurrentThreadContext =>
-            ContextById.TryGetValue(Thread.CurrentThread.ManagedThreadId, out var context) ? context : null;
+        public static ThreadContext GetCurrentThreadContext()
+        {
+            var syn = SynchronizationContext.Current;
+            if (syn != null)
+                return ContextById.TryGetValue(syn.GetHashCode(), out var context) ? context : null;
+
+            return null;
+        }
 
         public static ThreadContext[] GetContextList()
         {
@@ -150,12 +151,12 @@ namespace HardDev
 
         public static int? GetCurrentContextId()
         {
-            return CurrentThreadContext?.Id;
+            return GetCurrentThreadContext()?.Id;
         }
 
         public static string GetCurrentContextName()
         {
-            return CurrentThreadContext?.Name;
+            return GetCurrentThreadContext()?.Name;
         }
 
         public static bool ContainsContext(int id)
@@ -180,7 +181,7 @@ namespace HardDev
 
         public static bool IsThreadContext()
         {
-            return ContextById.ContainsKey(Thread.CurrentThread.ManagedThreadId);
+            return GetCurrentThreadContext() != null;
         }
 
         public static bool IsThreadContext(int id)

@@ -11,13 +11,12 @@ namespace HardDev.Context
         public readonly string Name;
         public readonly SynchronizationContext Context;
         public readonly IAwaiter Awaiter;
-        public int Id => _thread.ManagedThreadId;
+        public readonly int Id;
 
-        private readonly Thread _thread;
         private readonly BlockingCollection<Action> _queueActions = new BlockingCollection<Action>();
         private int _outstandingOperations;
 
-        public ThreadContext(string name, SynchronizationContext context = null, ThreadPriority priority = ThreadPriority.Normal)
+        public ThreadContext(string name, SynchronizationContext context = null)
         {
             Name = name;
             Awaiter = new ThreadContextAwaiter(this);
@@ -26,14 +25,14 @@ namespace HardDev.Context
             {
                 Context = new SynContext(this);
                 Context.OperationStarted();
-                _thread = new Thread(Execute) {Name = name, Priority = priority, IsBackground = true};
-                _thread.Start();
+                Task.Run(Execute);
             }
             else
             {
                 Context = context;
-                _thread = Thread.CurrentThread;
             }
+            
+            Id = Context.GetHashCode();
         }
 
         public Task Post(Action action)
@@ -64,11 +63,6 @@ namespace HardDev.Context
             Context.Post(state => callback(), null);
 
             return tcs.Task.ExceptionHandler();
-        }
-
-        public void Join()
-        {
-            _thread.Join();
         }
 
         private void Execute()
