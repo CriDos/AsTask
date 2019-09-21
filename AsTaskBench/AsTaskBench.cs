@@ -7,6 +7,7 @@ using HardDev.Awaiter;
 
 namespace AsTaskBench
 {
+    [MemoryDiagnoser]
     [SimpleJob(RunStrategy.Throughput, targetCount: 10)]
     public class AsTaskBench
     {
@@ -18,7 +19,7 @@ namespace AsTaskBench
         [Benchmark(Description = "ToBackgroundContext1")]
         public async Task TestBc1()
         {
-            await AsTask.ToBackgroundContext( () => Thread.Sleep(100));
+            await AsTask.ToBackgroundContext(() => Thread.Sleep(100));
             await Task.Yield();
         }
 
@@ -29,7 +30,7 @@ namespace AsTaskBench
             await 100;
             await Task.Yield();
         }
-        
+
         [Benchmark(Description = "ToBackgroundContext3")]
         public async Task TestBc3()
         {
@@ -51,7 +52,7 @@ namespace AsTaskBench
             await 100;
             await Task.Yield();
         }
-        
+
         [Benchmark(Description = "ToStaticThreadPool3")]
         public async Task TestStp3()
         {
@@ -65,7 +66,7 @@ namespace AsTaskBench
             await AsTask.ToDynamicThreadPool(() => Thread.Sleep(100));
             await Task.Yield();
         }
-        
+
         [Benchmark(Description = "ToDynamicThreadPool2")]
         public async Task TestDtp2()
         {
@@ -73,7 +74,7 @@ namespace AsTaskBench
             await 100;
             await Task.Yield();
         }
-        
+
         [Benchmark(Description = "ToDynamicThreadPool3")]
         public async Task TestDtp3()
         {
