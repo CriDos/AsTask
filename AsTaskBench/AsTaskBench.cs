@@ -100,7 +100,7 @@ namespace AsTaskBench
             }
         }
 
-        [Benchmark(Description = "TaskSwitchStaticThreadPool")]
+        [Benchmark(Description = "TaskSwitchDynamicThreadPool")]
         public async Task TestSwitch3()
         {
             for (var i = 0; i < 100; i++)
