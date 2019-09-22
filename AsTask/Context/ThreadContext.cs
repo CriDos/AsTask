@@ -9,10 +9,10 @@ namespace HardDev.Context
     public sealed class ThreadContext : IDisposable
     {
         public readonly string Name;
+        public readonly int Id;
         public readonly SynchronizationContext Context;
         public readonly IAwaiter Awaiter;
-        public readonly int Id;
-
+        
         private readonly BlockingCollection<Action> _queueActions = new BlockingCollection<Action>();
         private int _outstandingOperations;
 
