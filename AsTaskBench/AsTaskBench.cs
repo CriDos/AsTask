@@ -82,7 +82,7 @@ namespace AsTaskBench
             await Task.Yield();
         }
 
-        [Benchmark(Description = "TaskSwitchBackgroundContext")]
+        [Benchmark(Description = "TaskSelfSwitchBackgroundContext")]
         public async Task TestSwitch1()
         {
             for (var i = 0; i < 100; i++)
@@ -91,7 +91,7 @@ namespace AsTaskBench
             }
         }
 
-        [Benchmark(Description = "TaskSwitchStaticThreadPool")]
+        [Benchmark(Description = "TaskSelfSwitchStaticThreadPool")]
         public async Task TestSwitch2()
         {
             for (var i = 0; i < 100; i++)
@@ -100,7 +100,7 @@ namespace AsTaskBench
             }
         }
 
-        [Benchmark(Description = "TaskSwitchDynamicThreadPool")]
+        [Benchmark(Description = "TaskSelfSwitchDynamicThreadPool")]
         public async Task TestSwitch3()
         {
             for (var i = 0; i < 100; i++)
