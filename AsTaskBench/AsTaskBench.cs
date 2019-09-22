@@ -19,7 +19,7 @@ namespace AsTaskBench
         [Benchmark(Description = "ToBackgroundContext1")]
         public async Task TestBc1()
         {
-            await AsTask.ToBackgroundContext(() => Thread.Sleep(100));
+            await AsTask.ToBackgroundContext(() => Thread.Sleep(10));
             await Task.Yield();
         }
 
@@ -27,7 +27,7 @@ namespace AsTaskBench
         public async Task TestBc2()
         {
             await AsTask.ToBackgroundContext();
-            await 100;
+            await 10;
             await Task.Yield();
         }
 
@@ -41,7 +41,7 @@ namespace AsTaskBench
         [Benchmark(Description = "ToStaticThreadPool1")]
         public async Task TestStp1()
         {
-            await AsTask.ToStaticThreadPool(() => Thread.Sleep(100));
+            await AsTask.ToStaticThreadPool(() => Thread.Sleep(10));
             await Task.Yield();
         }
 
@@ -49,7 +49,7 @@ namespace AsTaskBench
         public async Task TestStp2()
         {
             await AsTask.ToStaticThreadPool();
-            await 100;
+            await 10;
             await Task.Yield();
         }
 
@@ -63,7 +63,7 @@ namespace AsTaskBench
         [Benchmark(Description = "ToDynamicThreadPool1")]
         public async Task TestDtp1()
         {
-            await AsTask.ToDynamicThreadPool(() => Thread.Sleep(100));
+            await AsTask.ToDynamicThreadPool(() => Thread.Sleep(10));
             await Task.Yield();
         }
 
@@ -71,7 +71,7 @@ namespace AsTaskBench
         public async Task TestDtp2()
         {
             await AsTask.ToDynamicThreadPool();
-            await 100;
+            await 10;
             await Task.Yield();
         }
 
@@ -80,6 +80,44 @@ namespace AsTaskBench
         {
             await AsTask.ToDynamicThreadPool();
             await Task.Yield();
+        }
+
+        [Benchmark(Description = "TaskSwitchBackgroundContext")]
+        public async Task TestSwitch1()
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                await AsTask.ToBackgroundContext();
+            }
+        }
+
+        [Benchmark(Description = "TaskSwitchStaticThreadPool")]
+        public async Task TestSwitch2()
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                await AsTask.ToStaticThreadPool();
+            }
+        }
+
+        [Benchmark(Description = "TaskSwitchStaticThreadPool")]
+        public async Task TestSwitch3()
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                await AsTask.ToDynamicThreadPool();
+            }
+        }
+
+        [Benchmark(Description = "TaskMultiSwitch")]
+        public async Task TestSwitch4()
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                await AsTask.ToBackgroundContext();
+                await AsTask.ToStaticThreadPool();
+                await AsTask.ToDynamicThreadPool();
+            }
         }
     }
 }

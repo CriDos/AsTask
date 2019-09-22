@@ -12,8 +12,7 @@ namespace HardDev.Awaiter
     {
         public IAwaiter GetAwaiter() => this;
         public bool IsCompleted => false;
-
-
+        
         private readonly int _ms;
 
         /// <summary>
@@ -22,7 +21,7 @@ namespace HardDev.Awaiter
         /// <param name="ms">If positive, number of milliseconds to wait</param>
         public DelayAwaiter(int ms)
         {
-            _ms = ms < 0 ? 0 : ms;
+            _ms = ms;
         }
 
         public async void OnCompleted(Action action)
