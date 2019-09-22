@@ -12,7 +12,7 @@ namespace HardDev.Context
         public readonly int Id;
         public readonly SynchronizationContext Context;
         public readonly IAwaiter Awaiter;
-        
+
         private readonly BlockingCollection<Action> _queueActions = new BlockingCollection<Action>();
         private int _outstandingOperations;
 
@@ -72,9 +72,9 @@ namespace HardDev.Context
                 action();
         }
 
-        private void Enqueue(SendOrPostCallback d, object state)
+        private void Enqueue(Action action)
         {
-            _queueActions.Add(() => d(state));
+            _queueActions.Add(action);
         }
 
         private void AllowToExit()
@@ -142,7 +142,7 @@ namespace HardDev.Context
 
             public override void Post(SendOrPostCallback d, object state)
             {
-                _context.Enqueue(d, state);
+                _context.Enqueue(() => d(state));
             }
 
             public override void OperationStarted()
