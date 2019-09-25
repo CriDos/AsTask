@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,32 +78,6 @@ namespace AsTaskTests
 
             Console.WriteLine(AsTask.WhereAmI());
             Assert.True(AsTask.IsDynamicThreadPool(), "This is not the DynamicThreadPool!");
-        }
-
-        [Test]
-        public async Task TestStaticThreadPoolCountRunningTasks()
-        {
-            var taskScheduler = AsTask.GetStaticTaskScheduler();
-            var stopwatch = Stopwatch.StartNew();
-
-            for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
-            {
-                _ = AsTask.ToStaticThreadPool(() => Thread.Sleep(200));
-            }
-
-            await 100;
-            Assert.True(taskScheduler.CountExecutableTasks == taskScheduler.MaximumConcurrencyLevel);
-
-            await AsTask.ToStaticThreadPool();
-
-            Console.WriteLine(taskScheduler.CountExecutableTasks);
-            Assert.True(taskScheduler.CountExecutableTasks == 1);
-
-            stopwatch.Stop();
-
-            var ms = stopwatch.ElapsedMilliseconds;
-            Console.WriteLine(ms.ToString());
-            Assert.True(ms > 400 && ms < 450);
         }
 
         [Test]

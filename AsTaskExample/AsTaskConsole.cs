@@ -21,7 +21,7 @@ namespace AsTaskExample
                     : $"[ExceptionHandler] Unhandled exception in task {task}");
             });
 
-            
+
             WriteLine("We get or create a synchronization context and switch to it.");
             await AsTask.Initialize();
 

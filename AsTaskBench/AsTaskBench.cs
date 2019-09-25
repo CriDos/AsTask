@@ -1,7 +1,12 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Attributes.Jobs;
 using BenchmarkDotNet.Engines;
+using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Loggers;
+using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Toolchains.InProcess;
 using HardDev;
 using HardDev.Awaiter;
 
@@ -118,6 +123,13 @@ namespace AsTaskBench
                 await AsTask.ToStaticThreadPool();
                 await AsTask.ToDynamicThreadPool();
             }
+        }
+
+        public static void Main()
+        {
+            var bench = BenchmarkConverter.TypeToBenchmarks(typeof(AsTaskBench));
+            var summary = BenchmarkRunnerCore.Run(bench, _ => InProcessToolchain.Instance);
+            MarkdownExporter.Console.ExportToLog(summary, ConsoleLogger.Default);
         }
     }
 }

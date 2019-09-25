@@ -12,7 +12,7 @@ namespace HardDev.Awaiter
     {
         public IAwaiter GetAwaiter() => this;
         public bool IsCompleted => false;
-        
+
         private readonly int _ms;
 
         /// <summary>
