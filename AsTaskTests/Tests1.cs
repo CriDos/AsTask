@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +17,7 @@ namespace AsTaskTests
         public Tests1()
         {
             AsTask.Initialize();
-   
+
             _contextTests1Id = AsTask.CreateContext("Tests1");
         }
 
@@ -79,102 +78,6 @@ namespace AsTaskTests
 
             Console.WriteLine(AsTask.WhereAmI());
             Assert.True(AsTask.IsDynamicThreadPool(), "This is not the DynamicThreadPool!");
-        }
-
-        [Test]
-        public async Task TestToDynamicThreadPool2()
-        {
-            await AsTask.ToMainContext();
-
-            var stopwatch = Stopwatch.StartNew();
-            var list = new List<Task>();
-            for (var i = 0; i < 64; i++)
-                list.Add(AsTask.ToDynamicThreadPool(() => Thread.Sleep(100)));
-            await Task.WhenAll(list);
-            stopwatch.Stop();
-
-            Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms <  150ms");
-            Assert.True(stopwatch.ElapsedMilliseconds < 150);
-
-            stopwatch = Stopwatch.StartNew();
-            list = new List<Task>();
-            for (var i = 0; i < 100; i++)
-                list.Add(AsTask.ToDynamicThreadPool(() => Thread.Sleep(100)));
-            await Task.WhenAll(list);
-            stopwatch.Stop();
-
-            Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms > 150ms");
-            Assert.True(stopwatch.ElapsedMilliseconds > 150);
-        }
-
-        [Test]
-        public async Task TestDynamicThreadPoolCountTasksInQueue()
-        {
-            var taskScheduler = AsTask.GetDynamicTaskScheduler();
-            var stopwatch = Stopwatch.StartNew();
-
-            for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
-            {
-                _ = AsTask.ToDynamicThreadPool(() => { Thread.Sleep(100); });
-            }
-
-            Assert.True(taskScheduler.CountTasksInQueue == taskScheduler.MaximumConcurrencyLevel);
-
-            await AsTask.ToDynamicThreadPool();
-            stopwatch.Stop();
-
-            var ms = stopwatch.ElapsedMilliseconds;
-            Console.WriteLine(ms.ToString());
-            Assert.True(ms > 200 && ms < 300);
-        }
-
-        [Test]
-        public async Task TestStaticThreadPoolCountTasksInQueue()
-        {
-            var taskScheduler = AsTask.GetStaticTaskScheduler();
-            var stopwatch = Stopwatch.StartNew();
-
-            for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
-            {
-                _ = AsTask.ToStaticThreadPool(() => { Thread.Sleep(200); });
-            }
-
-            await 100;
-            Assert.True(taskScheduler.CountTasksInQueue == taskScheduler.MaximumConcurrencyLevel);
-
-            await AsTask.ToStaticThreadPool();
-            stopwatch.Stop();
-
-            var ms = stopwatch.ElapsedMilliseconds;
-            Console.WriteLine(ms.ToString());
-            Assert.True(ms >= 400 && ms <= 450);
-        }
-
-        [Test]
-        public async Task TestStaticThreadPoolCountRunningTasks()
-        {
-            var taskScheduler = AsTask.GetStaticTaskScheduler();
-            var stopwatch = Stopwatch.StartNew();
-
-            for (var i = 0; i < taskScheduler.MaximumConcurrencyLevel * 2; i++)
-            {
-                _ = AsTask.ToStaticThreadPool(() => { Thread.Sleep(100); });
-            }
-
-            await 100;
-
-            Assert.True(taskScheduler.CountExecutableTasks == taskScheduler.MaximumConcurrencyLevel);
-
-            await AsTask.ToStaticThreadPool();
-
-            Console.WriteLine(taskScheduler.CountExecutableTasks);
-            Assert.True(taskScheduler.CountExecutableTasks == 1);
-
-            stopwatch.Stop();
-
-            var ms = stopwatch.ElapsedMilliseconds;
-            Console.WriteLine(ms.ToString());
-            Assert.True(ms > 200 && ms < 250);
         }
 
         [Test]
@@ -262,26 +165,6 @@ namespace AsTaskTests
                 await AsTask.ToDynamicThreadPool();
                 Assert.True(AsTask.IsDynamicThreadPool());
             }
-        }
-
-        [Test]
-        public async Task TestAddAndRemoveCustomThread()
-        {
-            const string THREAD_NAME = "TestThread";
-            var threadsCount = Process.GetCurrentProcess().Threads.Count;
-            var id = AsTask.CreateContext(THREAD_NAME);
-
-            await AsTask.ToContext(id);
-            Assert.True(AsTask.GetCurrentContextName() == THREAD_NAME);
-            Assert.True(threadsCount + 1 == Process.GetCurrentProcess().Threads.Count);
-
-            await AsTask.ToMainContext();
-            _ = AsTask.ToContext(id, () => Thread.Sleep(100));
-
-            AsTask.RemoveContext(id);
-
-            await 200;
-            Assert.True(threadsCount == Process.GetCurrentProcess().Threads.Count);
         }
 
         [Test]

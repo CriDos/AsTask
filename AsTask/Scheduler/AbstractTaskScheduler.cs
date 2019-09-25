@@ -15,7 +15,6 @@ namespace HardDev.Scheduler
         public readonly string Name;
         public int CountExecutableTasks => _countExecutableTasks;
         public int CountTasksInQueue => TasksToRun.Count;
-        public readonly ThreadPriority Priority;
         public readonly TaskFactory TaskFactory;
         public readonly IAwaiter Awaiter;
 
@@ -37,12 +36,10 @@ namespace HardDev.Scheduler
         /// <summary>Initializes the scheduler.</summary>
         /// <param name="maxConcurrency">The number of threads to create and use for processing work items.</param>
         /// <param name="name">The name to use for each of the created threads.</param>
-        /// <param name="priority">The priority to assign to each thread.</param>
-        protected AbstractTaskScheduler(string name, int maxConcurrency, ThreadPriority priority = ThreadPriority.Normal)
+        protected AbstractTaskScheduler(string name, int maxConcurrency)
         {
             Name = name;
             MaximumConcurrencyLevel = maxConcurrency <= 0 ? Environment.ProcessorCount : maxConcurrency;
-            Priority = priority;
             TaskFactory = new TaskFactory(this);
             Awaiter = new TaskFactoryAwaiter(TaskFactory);
         }

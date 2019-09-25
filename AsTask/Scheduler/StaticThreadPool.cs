@@ -1,29 +1,19 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace HardDev.Scheduler
 {
     internal sealed class StaticThreadPool : AbstractTaskScheduler
     {
-        public StaticThreadPool(string name, int maxConcurrency, ThreadPriority priority = ThreadPriority.Normal) :
-            base(name, maxConcurrency, priority)
+        public StaticThreadPool(string name, int maxConcurrency) :
+            base(name, maxConcurrency)
         {
             // Create all of the threads
-            var threads = new Thread[maxConcurrency];
+            var threads = new Task[maxConcurrency];
             for (var i = 0; i < maxConcurrency; i++)
             {
-                threads[i] = new Thread(ThreadBasedDispatchLoop)
-                {
-                    Name = name,
-                    Priority = priority,
-                    IsBackground = true
-                };
-            }
-
-            // Start all of the threads
-            foreach (var thread in threads)
-            {
-                thread.Start();
+                threads[i] = Task.Factory.StartNew(ThreadBasedDispatchLoop, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
             }
         }
 

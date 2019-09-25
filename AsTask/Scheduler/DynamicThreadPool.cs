@@ -8,8 +8,8 @@ namespace HardDev.Scheduler
     {
         private int _countThreads;
 
-        public DynamicThreadPool(string name, int maxConcurrency, ThreadPriority priority = ThreadPriority.Normal) :
-            base(name, maxConcurrency, priority)
+        public DynamicThreadPool(string name, int maxConcurrency) :
+            base(name, maxConcurrency)
         {
         }
 
@@ -28,12 +28,7 @@ namespace HardDev.Scheduler
                 return;
 
             Interlocked.Increment(ref _countThreads);
-            new Thread(ThreadBasedDispatchLoop)
-            {
-                Name = Name,
-                Priority = Priority,
-                IsBackground = true
-            }.Start();
+            Task.Factory.StartNew(ThreadBasedDispatchLoop, TaskCreationOptions.DenyChildAttach);
         }
 
         private void ThreadBasedDispatchLoop()
