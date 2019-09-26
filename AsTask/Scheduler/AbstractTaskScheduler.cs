@@ -52,7 +52,7 @@ namespace HardDev.Scheduler
             // If we've been disposed, no one should be queueing
             if (DisposeCancellation.IsCancellationRequested)
             {
-                throw new ObjectDisposedException(GetType().Name);
+                throw new OperationCanceledException(GetType().Name);
             }
 
             // add the task to the blocking queue
