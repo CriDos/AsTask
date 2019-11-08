@@ -8,7 +8,6 @@ using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.InProcess;
 using HardDev;
-using HardDev.Awaiter;
 
 namespace AsTaskBench
 {
@@ -32,7 +31,7 @@ namespace AsTaskBench
         public async ValueTask TestBc2()
         {
             await AsTask.ToBackgroundContext();
-            await 10;
+            await Task.Delay(10);
             await Task.Yield();
         }
 
@@ -54,7 +53,7 @@ namespace AsTaskBench
         public async ValueTask TestStp2()
         {
             await AsTask.ToStaticThreadPool();
-            await 10;
+            await Task.Delay(10);
             await Task.Yield();
         }
 
@@ -76,7 +75,7 @@ namespace AsTaskBench
         public async ValueTask TestDtp2()
         {
             await AsTask.ToDynamicThreadPool();
-            await 10;
+            await Task.Delay(10);
             await Task.Yield();
         }
 
