@@ -8,7 +8,6 @@ using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.InProcess;
 using HardDev;
-using HardDev.Awaiter;
 
 namespace AsTaskBench
 {
@@ -22,73 +21,73 @@ namespace AsTaskBench
         }
 
         [Benchmark(Description = "ToBackgroundContext1")]
-        public async Task TestBc1()
+        public async ValueTask TestBc1()
         {
             await AsTask.ToBackgroundContext(() => Thread.Sleep(10));
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToBackgroundContext2")]
-        public async Task TestBc2()
+        public async ValueTask TestBc2()
         {
             await AsTask.ToBackgroundContext();
-            await 10;
+            await Task.Delay(10);
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToBackgroundContext3")]
-        public async Task TestBc3()
+        public async ValueTask TestBc3()
         {
             await AsTask.ToBackgroundContext();
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToStaticThreadPool1")]
-        public async Task TestStp1()
+        public async ValueTask TestStp1()
         {
             await AsTask.ToStaticThreadPool(() => Thread.Sleep(10));
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToStaticThreadPool2")]
-        public async Task TestStp2()
+        public async ValueTask TestStp2()
         {
             await AsTask.ToStaticThreadPool();
-            await 10;
+            await Task.Delay(10);
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToStaticThreadPool3")]
-        public async Task TestStp3()
+        public async ValueTask TestStp3()
         {
             await AsTask.ToStaticThreadPool();
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToDynamicThreadPool1")]
-        public async Task TestDtp1()
+        public async ValueTask TestDtp1()
         {
             await AsTask.ToDynamicThreadPool(() => Thread.Sleep(10));
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToDynamicThreadPool2")]
-        public async Task TestDtp2()
+        public async ValueTask TestDtp2()
         {
             await AsTask.ToDynamicThreadPool();
-            await 10;
+            await Task.Delay(10);
             await Task.Yield();
         }
 
         [Benchmark(Description = "ToDynamicThreadPool3")]
-        public async Task TestDtp3()
+        public async ValueTask TestDtp3()
         {
             await AsTask.ToDynamicThreadPool();
             await Task.Yield();
         }
 
         [Benchmark(Description = "TaskSelfSwitchBackgroundContext")]
-        public async Task TestSwitch1()
+        public async ValueTask TestSwitch1()
         {
             for (var i = 0; i < 100; i++)
             {
@@ -97,7 +96,7 @@ namespace AsTaskBench
         }
 
         [Benchmark(Description = "TaskSelfSwitchStaticThreadPool")]
-        public async Task TestSwitch2()
+        public async ValueTask TestSwitch2()
         {
             for (var i = 0; i < 100; i++)
             {
@@ -106,7 +105,7 @@ namespace AsTaskBench
         }
 
         [Benchmark(Description = "TaskSelfSwitchDynamicThreadPool")]
-        public async Task TestSwitch3()
+        public async ValueTask TestSwitch3()
         {
             for (var i = 0; i < 100; i++)
             {
@@ -115,7 +114,7 @@ namespace AsTaskBench
         }
 
         [Benchmark(Description = "TaskMultiSwitch")]
-        public async Task TestSwitch4()
+        public async ValueTask TestSwitch4()
         {
             for (var i = 0; i < 100; i++)
             {

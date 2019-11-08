@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using HardDev;
-using HardDev.Awaiter;
 using HardDev.Context;
 using NUnit.Framework;
 
@@ -85,7 +84,7 @@ namespace AsTaskTests
         {
             await AsTask.ToMainContext();
             var stopwatch = Stopwatch.StartNew();
-            await 100;
+            await Task.Delay(100);
             stopwatch.Stop();
             Assert.True(AsTask.IsMainContext(), $"This is not the MainContext: {AsTask.WhereAmI()}");
             Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms == {AsTask.GetCurrentContextType()} awaiter 100ms");
@@ -97,7 +96,7 @@ namespace AsTaskTests
         {
             await AsTask.ToBackgroundContext();
             var stopwatch = Stopwatch.StartNew();
-            await 100;
+            await Task.Delay(100);
             stopwatch.Stop();
             Assert.True(AsTask.IsBackgroundContext(), $"This is not the BackgroundContext: {AsTask.WhereAmI()}");
             Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms == {AsTask.GetCurrentContextType()} awaiter 100ms");
@@ -109,7 +108,7 @@ namespace AsTaskTests
         {
             await AsTask.ToStaticThreadPool();
             var stopwatch = Stopwatch.StartNew();
-            await 100;
+            await Task.Delay(100);
             stopwatch.Stop();
             Assert.True(AsTask.IsStaticThreadPool(), $"This is not the StaticThreadPool: {AsTask.WhereAmI()}");
             Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms == {AsTask.GetCurrentContextType()} awaiter 100ms");
@@ -121,7 +120,7 @@ namespace AsTaskTests
         {
             await AsTask.ToDynamicThreadPool();
             var stopwatch = Stopwatch.StartNew();
-            await 100;
+            await Task.Delay(100);
             stopwatch.Stop();
             Assert.True(AsTask.IsDynamicThreadPool(), $"This is not the DynamicThreadPool: {AsTask.WhereAmI()}");
             Console.WriteLine($"{nameof(stopwatch)} {stopwatch.ElapsedMilliseconds}ms == {AsTask.GetCurrentContextType()} awaiter 100ms");

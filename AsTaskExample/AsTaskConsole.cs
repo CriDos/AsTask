@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using HardDev;
-using HardDev.Awaiter;
 using HardDev.Context;
 using static System.Console;
 
@@ -63,14 +62,14 @@ namespace AsTaskExample
             while (!_isShutdown)
             {
                 WriteLine($"Count running tasks: {scheduler.CountExecutableTasks}; Count tasks in queue: {scheduler.CountTasksInQueue}");
-                await 1000; // Each iteration waits asynchronously for 1000 ms
+                await Task.Delay(1000); // Each iteration waits asynchronously for 1000 ms
             }
 
             WriteLine("Shutdown...");
             for (var i = 5; i > 0; i--)
             {
                 WriteLine($"Shutdown through {i}s");
-                await 1000;
+                await Task.Delay(1000);
             }
         }
 
