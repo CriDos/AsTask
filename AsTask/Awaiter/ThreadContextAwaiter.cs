@@ -3,27 +3,28 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using HardDev.Context;
 
-namespace HardDev.Awaiter;
-
-[StructLayout(LayoutKind.Auto)]
-public readonly struct ThreadContextAwaiter : IAwaiter
+namespace HardDev.Awaiter
 {
-    public IAwaiter GetAwaiter() => this;
-    public bool IsCompleted => _context.Context == SynchronizationContext.Current;
-
-    private readonly ThreadContext _context;
-
-    public ThreadContextAwaiter(ThreadContext context)
+    [StructLayout(LayoutKind.Auto)]
+    public struct ThreadContextAwaiter : IAwaiter
     {
-        _context = context;
-    }
+        public IAwaiter GetAwaiter() => this;
+        public bool IsCompleted => _context.Context == SynchronizationContext.Current;
 
-    public void OnCompleted(Action action)
-    {
-        _context.Post(action);
-    }
+        private readonly ThreadContext _context;
 
-    public void GetResult()
-    {
+        public ThreadContextAwaiter(ThreadContext context)
+        {
+            _context = context;
+        }
+
+        public void OnCompleted(Action action)
+        {
+            _context.Post(action);
+        }
+
+        public void GetResult()
+        {
+        }
     }
 }

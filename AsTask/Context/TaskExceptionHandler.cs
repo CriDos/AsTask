@@ -1,35 +1,36 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace HardDev.Context;
-
-public static class TaskExceptionHandler
+namespace HardDev.Context
 {
-    private static Action<Task> _handler;
-
-    public static void SetExceptionHandler(Action<Task> exceptionHandler)
+    public static class TaskExceptionHandler
     {
-        _handler = exceptionHandler;
-    }
+        private static Action<Task> _handler;
 
-    public static void AddUnhandledException(UnhandledExceptionEventHandler exceptionHandler)
-    {
-        AppDomain.CurrentDomain.UnhandledException += exceptionHandler;
-    }
+        public static void SetExceptionHandler(Action<Task> exceptionHandler)
+        {
+            _handler = exceptionHandler;
+        }
 
-    public static void AddUnobservedTaskException(EventHandler<UnobservedTaskExceptionEventArgs> exceptionHandler)
-    {
-        TaskScheduler.UnobservedTaskException += exceptionHandler;
-    }
+        public static void AddUnhandledException(UnhandledExceptionEventHandler exceptionHandler)
+        {
+            AppDomain.CurrentDomain.UnhandledException += exceptionHandler;
+        }
 
-    public static Task ExceptionHandler(this Task task, Action<Task> customHandler = null)
-    {
-        if (customHandler != null)
-            task.ContinueWith(customHandler, TaskContinuationOptions.OnlyOnFaulted);
+        public static void AddUnobservedTaskException(EventHandler<UnobservedTaskExceptionEventArgs> exceptionHandler)
+        {
+            TaskScheduler.UnobservedTaskException += exceptionHandler;
+        }
 
-        if (_handler != null)
-            task.ContinueWith(_handler, TaskContinuationOptions.OnlyOnFaulted);
+        public static Task ExceptionHandler(this Task task, Action<Task> customHandler = null)
+        {
+            if (customHandler != null)
+                task.ContinueWith(customHandler, TaskContinuationOptions.OnlyOnFaulted);
 
-        return task;
+            if (_handler != null)
+                task.ContinueWith(_handler, TaskContinuationOptions.OnlyOnFaulted);
+
+            return task;
+        }
     }
 }

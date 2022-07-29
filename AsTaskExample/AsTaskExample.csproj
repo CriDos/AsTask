@@ -1,16 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <RootNamespace>HardDev</RootNamespace>
+        <TargetFramework>netcoreapp3.0</TargetFramework>
+        <LangVersion>8</LangVersion>
         <OutputType>Exe</OutputType>
-        <LangVersion>default</LangVersion>
-        <Platforms>AnyCPU</Platforms>
         <NullableContextOptions>disable</NullableContextOptions>
-        <TargetFramework>net6.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <Authors>CriDos</Authors>
+        <Copyright>Copyright HardDev©  2019</Copyright>
+        <PackageVersion />
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AsTask\AsTask.csproj"/>
+        <ProjectReference Include="..\AsTask\AsTask.csproj" />
     </ItemGroup>
 
 </Project>

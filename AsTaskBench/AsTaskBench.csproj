@@ -1,16 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <RootNamespace>HardDev</RootNamespace>
-        <LangVersion>default</LangVersion>
-        <Platforms>AnyCPU</Platforms>
-        <NullableContextOptions>disable</NullableContextOptions>
-        <TargetFramework>net6.0</TargetFramework>
         <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.0</TargetFramework>
+        <LangVersion>8</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+        <PackageReference Include="BenchmarkDotNet.Core" Version="0.10.14" />
     </ItemGroup>
 
     <ItemGroup>

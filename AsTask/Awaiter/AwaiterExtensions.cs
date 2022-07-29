@@ -1,11 +1,12 @@
 using HardDev.Context;
 
-namespace HardDev.Awaiter;
-
-public static class AwaiterExtensions
+namespace HardDev.Awaiter
 {
-    public static IAwaiter GetAwaiter(this ThreadContext context)
+    public static class AwaiterExtensions
     {
-        return context.Awaiter;
+        public static IAwaiter GetAwaiter(this ThreadContext context)
+        {
+            return context.Awaiter;
+        }
     }
 }
