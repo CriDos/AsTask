@@ -2,30 +2,29 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace HardDev.Awaiter
+namespace HardDev.Awaiter;
+
+[StructLayout(LayoutKind.Auto)]
+public readonly struct TaskFactoryAwaiter : IAwaiter
 {
-    [StructLayout(LayoutKind.Auto)]
-    public struct TaskFactoryAwaiter : IAwaiter
+    public IAwaiter GetAwaiter() => this;
+    public bool IsCompleted => TaskScheduler.Current == _taskFactory.Scheduler;
+
+    private readonly TaskFactory _taskFactory;
+
+    public TaskFactoryAwaiter(TaskFactory taskFactory)
     {
-        public IAwaiter GetAwaiter() => this;
-        public bool IsCompleted => TaskScheduler.Current == _taskFactory.Scheduler;
+        _taskFactory = taskFactory;
+    }
 
-        private readonly TaskFactory _taskFactory;
+    public void OnCompleted(Action action)
+    {
+        _taskFactory.StartNew(action, _taskFactory.CancellationToken,
+            _taskFactory.CreationOptions | TaskCreationOptions.DenyChildAttach,
+            _taskFactory.Scheduler ?? TaskScheduler.Default);
+    }
 
-        public TaskFactoryAwaiter(TaskFactory taskFactory)
-        {
-            _taskFactory = taskFactory;
-        }
-
-        public void OnCompleted(Action action)
-        {
-            _taskFactory.StartNew(action, _taskFactory.CancellationToken,
-                _taskFactory.CreationOptions | TaskCreationOptions.DenyChildAttach,
-                _taskFactory.Scheduler ?? TaskScheduler.Default);
-        }
-
-        public void GetResult()
-        {
-        }
+    public void GetResult()
+    {
     }
 }

@@ -1,11 +1,10 @@
-namespace HardDev.Context
+namespace HardDev.Context;
+
+public enum ThreadContextType
 {
-    public enum ThreadContextType
-    {
-        UndefinedContext,
-        ThreadContext,
-        StaticThreadPool,
-        DynamicThreadPool,
-        UndefinedThreadPool
-    }
+    UndefinedContext,
+    ThreadContext,
+    StaticThreadPool,
+    DynamicThreadPool,
+    CustomThreadPool
 }
